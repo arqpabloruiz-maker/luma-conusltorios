@@ -1260,6 +1260,8 @@
       </div>
     </div>
 
+  </main>
+
     <!-- CONSULTORIOS -->
     <div id="view-consultorios" class="view">
       <div class="section-title">Consultorios</div>
@@ -1277,8 +1279,49 @@
       </div>
     </div>
 
-    <!-- VIEW CONFIG -->
-    <div id="view-config" class="view" style="padding:1.25rem; padding-bottom:5rem;">
+  </main>
+
+  <!-- VIEW CONFIG -->
+  <div id="view-config" class="view" style="padding:1.25rem; padding-bottom:5rem;">
+    <div class="section-title">Configuración</div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-row" style="margin-bottom:0.75rem">
+        <div class="card-name">Mi cuenta</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Usuario conectado</div>
+      <div id="config-email-display" style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--text);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Rol</div>
+      <div id="config-rol-display" style="font-size:0.85rem;font-weight:600;color:var(--gold);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
+      <button class="btn-secondary" onclick="cerrarSesion()" style="width:100%">Cerrar sesión</button>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-row" style="margin-bottom:0.75rem">
+        <div class="card-name">Copia de seguridad</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
+        Guarda todos los datos en Google Drive. El archivo se llama <span style="font-family:'DM Mono',monospace">luma_backup.json</span> y se sobreescribe en cada backup.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <button class="btn-primary" onclick="hacerBackup()" id="btn-backup">☁ Hacer backup ahora</button>
+        <button class="btn-secondary" onclick="restaurarBackup()" id="btn-restore">↩ Restaurar última copia</button>
+      </div>
+      <div id="backup-status" style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);text-align:center;min-height:1.2em"></div>
+    </div>
+
+    <div id="config-usuarios-section" class="card" style="display:none">
+      <div class="card-row" style="margin-bottom:0.75rem">
+        <div class="card-name">Usuarios</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
+        Los usuarios se crean desde el panel de Supabase. Aquí podés ver los perfiles registrados.
+      </div>
+      <div id="config-usuarios-list" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    </div>
+  </div>
+
+  <!-- MODAL RESUMEN MÉDICO -->
   <div class="modal-overlay hidden" id="resumen-overlay" onclick="cerrarResumen(event)">
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:480px">
       <div class="modal-handle"></div>
@@ -1319,51 +1362,6 @@
       <button onclick="cerrarRecibo()" style="width:100%;margin-top:0.5rem;background:none;border:none;color:var(--text-muted);font-size:0.85rem;cursor:pointer;padding:0.5rem">Cerrar</button>
     </div>
   </div>
-
-  <!-- VIEW CONFIG -->
-  <div id="view-config" class="view" style="padding:1.25rem; padding-bottom:5rem;">
-    <div class="section-title">Configuración</div>
-
-    <!-- Mi cuenta -->
-    <div class="card" style="margin-bottom:1rem">
-      <div class="card-row" style="margin-bottom:0.75rem">
-        <div class="card-name">Mi cuenta</div>
-      </div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Usuario conectado</div>
-      <div id="config-email-display" style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--text);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Rol</div>
-      <div id="config-rol-display" style="font-size:0.85rem;font-weight:600;color:var(--gold);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
-      <button class="btn-secondary" onclick="cerrarSesion()" style="width:100%">Cerrar sesión</button>
-    </div>
-
-    <!-- Backup -->
-    <div class="card" style="margin-bottom:1rem">
-      <div class="card-row" style="margin-bottom:0.75rem">
-        <div class="card-name">Copia de seguridad</div>
-      </div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
-        Guarda todos los datos en Google Drive. El archivo se llama <span style="font-family:'DM Mono',monospace">luma_backup.json</span> y se sobreescribe en cada backup.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:0.75rem">
-        <button class="btn-primary" onclick="hacerBackup()" id="btn-backup">☁ Hacer backup ahora</button>
-        <button class="btn-secondary" onclick="restaurarBackup()" id="btn-restore">↩ Restaurar última copia</button>
-      </div>
-      <div id="backup-status" style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);text-align:center;min-height:1.2em"></div>
-    </div>
-
-    <!-- Gestión de usuarios — solo admin -->
-    <div id="config-usuarios-section" class="card" style="display:none">
-      <div class="card-row" style="margin-bottom:0.75rem">
-        <div class="card-name">Usuarios</div>
-      </div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
-        Los usuarios se crean desde el panel de Supabase. Aquí podés ver los perfiles registrados.
-      </div>
-      <div id="config-usuarios-list" style="display:flex;flex-direction:column;gap:0.5rem"></div>
-    </div>
-  </div>
-
-  </main>
 
   <!-- BOTTOM NAV -->
   <nav class="app-nav">
@@ -1487,8 +1485,6 @@ async function loginConEmail() {
     await cargarRolUsuario(data.user.email);
     document.getElementById('status-text').textContent = email.split('@')[0];
     iniciarApp();
-  } catch(e) {
-    showToast(e.message || 'Error al ingresar', 'error');
     if (btn) { btn.textContent = 'Ingresar →'; btn.disabled = false; }
   }
 }
@@ -1565,6 +1561,9 @@ async function cerrarSesion() {
   if (btn) { btn.textContent = 'Ingresar →'; btn.disabled = false; }
 }
 
+// Token de auth para las requests
+let AUTH_TOKEN = null;
+
 // ── ROLES ──
 async function cargarRolUsuario(email) {
   try {
@@ -1574,33 +1573,23 @@ async function cargarRolUsuario(email) {
     if (res.ok) {
       const data = await res.json();
       currentRol = data[0]?.rol || 'secretaria';
-    } else {
-      currentRol = 'secretaria';
-    }
-  } catch(e) {
-    currentRol = 'secretaria';
-  }
+    } else { currentRol = 'secretaria'; }
+  } catch(e) { currentRol = 'secretaria'; }
 }
 
 function aplicarPermisosPorRol() {
-  const esAdmin = currentRol === 'admin';
   const secUsers = document.getElementById('config-usuarios-section');
-  if (secUsers) secUsers.style.display = esAdmin ? 'block' : 'none';
+  if (secUsers) secUsers.style.display = currentRol === 'admin' ? 'block' : 'none';
 }
 
 // ── SECCIÓN CONFIG ──
 async function cargarSeccionConfig() {
-  // Mostrar email y rol
   const emailEl = document.getElementById('config-email-display');
   const rolEl = document.getElementById('config-rol-display');
   if (emailEl) emailEl.textContent = currentUser?.email || '—';
   if (rolEl) rolEl.textContent = currentRol === 'admin' ? '👑 Administrador' : '📋 Secretaria';
-
   aplicarPermisosPorRol();
-
-  if (currentRol === 'admin') {
-    await cargarListaUsuarios();
-  }
+  if (currentRol === 'admin') await cargarListaUsuarios();
 }
 
 async function cargarListaUsuarios() {
@@ -1615,9 +1604,8 @@ async function cargarListaUsuarios() {
     lista.innerHTML = data.map(u => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="font-family:'DM Mono',monospace;font-size:0.8rem">${u.email}</span>
-        <span style="font-size:0.75rem;font-weight:600;color:${u.rol === 'admin' ? 'var(--gold)' : 'var(--blue)'}">${u.rol}</span>
-      </div>
-    `).join('') || '<div style="color:var(--text-muted);font-size:0.8rem">Sin usuarios registrados</div>';
+        <span style="font-size:0.75rem;font-weight:600;color:${u.rol==='admin'?'var(--gold)':'var(--blue)'}">${u.rol}</span>
+      </div>`).join('') || '<div style="color:var(--text-muted);font-size:0.8rem">Sin usuarios registrados</div>';
   } catch(e) {
     lista.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem">Error al cargar usuarios</div>';
   }
@@ -1645,63 +1633,30 @@ async function hacerBackup() {
   const status = document.getElementById('backup-status');
   if (btn) { btn.textContent = '☁ Subiendo…'; btn.disabled = true; }
   if (status) status.textContent = 'Conectando con Google Drive…';
-
   try {
     const token = await obtenerTokenGoogle();
-
-    // Recolectar datos de Supabase
     const [profs, horarios, pagos] = await Promise.all([
       sbFetch('profesionales', { limit: 1000 }),
       sbFetch('horariosfijos', { limit: 1000 }),
       sbFetch('pagos', { limit: 5000 })
     ]);
-
-    const backup = {
-      fecha: new Date().toISOString(),
-      version: 'v5',
-      profesionales: profs,
-      horariosfijos: horarios,
-      pagos: pagos
-    };
-
-    const contenido = JSON.stringify(backup, null, 2);
-
-    // Buscar si ya existe el archivo
+    const contenido = JSON.stringify({ fecha: new Date().toISOString(), version: 'v5', profesionales: profs, horariosfijos: horarios, pagos }, null, 2);
     if (status) status.textContent = 'Buscando archivo existente…';
-    const buscar = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name)`,
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
+    const buscar = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name)`, { headers: { 'Authorization': `Bearer ${token}` } });
     const buscarData = await buscar.json();
     const archivoExistente = buscarData.files?.[0];
-
     if (status) status.textContent = 'Subiendo datos…';
-
     if (archivoExistente) {
-      // Actualizar existente
       await fetch(`https://www.googleapis.com/upload/drive/v3/files/${archivoExistente.id}?uploadType=media`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: contenido
+        method: 'PATCH', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: contenido
       });
     } else {
-      // Crear nuevo
-      const metadata = { name: BACKUP_FILENAME, mimeType: 'application/json' };
       const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('metadata', new Blob([JSON.stringify({ name: BACKUP_FILENAME, mimeType: 'application/json' })], { type: 'application/json' }));
       form.append('file', new Blob([contenido], { type: 'application/json' }));
-      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: form
-      });
+      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: form });
     }
-
-    const fecha = new Date().toLocaleString('es-AR');
-    if (status) status.textContent = `✓ Backup realizado el ${fecha}`;
+    if (status) status.textContent = `✓ Backup realizado el ${new Date().toLocaleString('es-AR')}`;
     showToast('Backup subido a Google Drive ✓', 'success');
   } catch(e) {
     if (status) status.textContent = 'Error al hacer backup';
@@ -1717,84 +1672,25 @@ async function restaurarBackup() {
   const status = document.getElementById('backup-status');
   if (btn) { btn.textContent = '↩ Buscando…'; btn.disabled = true; }
   if (status) status.textContent = 'Conectando con Google Drive…';
-
   try {
     const token = await obtenerTokenGoogle();
-
-    const buscar = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name,modifiedTime)`,
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
+    const buscar = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name,modifiedTime)`, { headers: { 'Authorization': `Bearer ${token}` } });
     const buscarData = await buscar.json();
     const archivo = buscarData.files?.[0];
-
-    if (!archivo) {
-      showToast('No se encontró ningún backup en Drive', 'error');
-      if (status) status.textContent = 'No hay backup disponible';
-      return;
-    }
-
+    if (!archivo) { showToast('No se encontró backup en Drive', 'error'); if (status) status.textContent = 'No hay backup disponible'; return; }
     const fechaArchivo = new Date(archivo.modifiedTime).toLocaleString('es-AR');
-    const confirmar = confirm(`¿Restaurar el backup del ${fechaArchivo}?\n\nEsto reemplazará los datos actuales.`);
-    if (!confirmar) {
-      if (status) status.textContent = '';
-      return;
-    }
-
+    if (!confirm(`¿Restaurar el backup del ${fechaArchivo}?\n\nEsto reemplazará los datos actuales.`)) { if (status) status.textContent = ''; return; }
     if (status) status.textContent = 'Descargando backup…';
-    const descargar = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${archivo.id}?alt=media`,
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
+    const descargar = await fetch(`https://www.googleapis.com/drive/v3/files/${archivo.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await descargar.json();
-
     if (status) status.textContent = 'Restaurando datos…';
-
-    // Restaurar cada tabla (upsert)
-    if (data.profesionales?.length) {
-      await fetch(`${SB_URL}/rest/v1/profesionales`, {
-        method: 'POST',
-        headers: {
-          'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify(data.profesionales)
-      });
+    for (const [tabla, filas] of [['profesionales', data.profesionales], ['horariosfijos', data.horariosfijos], ['pagos', data.pagos]]) {
+      if (filas?.length) {
+        await fetch(`${SB_URL}/rest/v1/${tabla}`, { method: 'POST', headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(filas) });
+      }
     }
-    if (data.horariosfijos?.length) {
-      await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
-        method: 'POST',
-        headers: {
-          'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify(data.horariosfijos)
-      });
-    }
-    if (data.pagos?.length) {
-      await fetch(`${SB_URL}/rest/v1/pagos`, {
-        method: 'POST',
-        headers: {
-          'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify(data.pagos)
-      });
-    }
-
     if (status) status.textContent = `✓ Restaurado desde backup del ${fechaArchivo}`;
     showToast('Datos restaurados correctamente ✓', 'success');
-
-    // Recargar la app
-    await cargarDashboard();
-    await cargarProfesionales();
-    await cargarHorarios();
-    await cargarPagos();
-    await cargarGrilla();
-
   } catch(e) {
     if (status) status.textContent = 'Error al restaurar';
     showToast('Error: ' + (e.message || 'No se pudo restaurar'), 'error');
@@ -1803,9 +1699,6 @@ async function restaurarBackup() {
     if (btn) { btn.textContent = '↩ Restaurar última copia'; btn.disabled = false; }
   }
 }
-
-// ── FIN BACKUP ──
-
 
 // ── INIT ──
 async function iniciarApp() {

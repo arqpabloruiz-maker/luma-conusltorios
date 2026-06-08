@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1282,6 +1281,7 @@
 
   </main>
 
+
   <!-- VIEW CONFIG -->
   <div id="view-config" class="view" style="padding:1.25rem; padding-bottom:5rem;">
     <div class="section-title">Configuración</div>
@@ -1305,8 +1305,8 @@
         Guarda todos los datos en Google Drive. El archivo se llama <span style="font-family:'DM Mono',monospace">luma_backup.json</span> y se sobreescribe en cada backup.
       </div>
       <div style="display:flex;flex-direction:column;gap:0.75rem">
-        <button class="btn-primary" onclick="hacerBackup()" id="btn-backup">☁ Hacer backup ahora</button>
-        <button class="btn-secondary" onclick="restaurarBackup()" id="btn-restore">↩ Restaurar última copia</button>
+        <button class="btn-primary" onclick="hacerBackup()" id="btn-backup">&#9729; Hacer backup ahora</button>
+        <button class="btn-secondary" onclick="restaurarBackup()" id="btn-restore">&#8617; Restaurar última copia</button>
       </div>
       <div id="backup-status" style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);text-align:center;min-height:1.2em"></div>
     </div>
@@ -1486,6 +1486,8 @@ async function loginConEmail() {
     await cargarRolUsuario(data.user.email);
     document.getElementById('status-text').textContent = email.split('@')[0];
     iniciarApp();
+  } catch(e) {
+    showToast(e.message || 'Error al ingresar', 'error');
     if (btn) { btn.textContent = 'Ingresar →'; btn.disabled = false; }
   }
 }
@@ -1565,6 +1567,7 @@ async function cerrarSesion() {
 // Token de auth para las requests
 let AUTH_TOKEN = null;
 
+
 // ── ROLES ──
 async function cargarRolUsuario(email) {
   try {
@@ -1583,7 +1586,6 @@ function aplicarPermisosPorRol() {
   if (secUsers) secUsers.style.display = currentRol === 'admin' ? 'block' : 'none';
 }
 
-// ── SECCIÓN CONFIG ──
 async function cargarSeccionConfig() {
   const emailEl = document.getElementById('config-email-display');
   const rolEl = document.getElementById('config-rol-display');
@@ -1632,7 +1634,7 @@ async function obtenerTokenGoogle() {
 async function hacerBackup() {
   const btn = document.getElementById('btn-backup');
   const status = document.getElementById('backup-status');
-  if (btn) { btn.textContent = '☁ Subiendo…'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Subiendo…'; btn.disabled = true; }
   if (status) status.textContent = 'Conectando con Google Drive…';
   try {
     const token = await obtenerTokenGoogle();
@@ -1657,47 +1659,58 @@ async function hacerBackup() {
       form.append('file', new Blob([contenido], { type: 'application/json' }));
       await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: form });
     }
-    if (status) status.textContent = `✓ Backup realizado el ${new Date().toLocaleString('es-AR')}`;
-    showToast('Backup subido a Google Drive ✓', 'success');
+    if (status) status.textContent = `Backup realizado el ${new Date().toLocaleString('es-AR')}`;
+    showToast('Backup subido a Google Drive', 'success');
   } catch(e) {
     if (status) status.textContent = 'Error al hacer backup';
     showToast('Error: ' + (e.message || 'No se pudo conectar con Drive'), 'error');
     googleAccessToken = null;
   } finally {
-    if (btn) { btn.textContent = '☁ Hacer backup ahora'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Hacer backup ahora'; btn.disabled = false; }
   }
 }
 
 async function restaurarBackup() {
   const btn = document.getElementById('btn-restore');
   const status = document.getElementById('backup-status');
-  if (btn) { btn.textContent = '↩ Buscando…'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Buscando…'; btn.disabled = true; }
   if (status) status.textContent = 'Conectando con Google Drive…';
   try {
     const token = await obtenerTokenGoogle();
     const buscar = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name,modifiedTime)`, { headers: { 'Authorization': `Bearer ${token}` } });
     const buscarData = await buscar.json();
     const archivo = buscarData.files?.[0];
-    if (!archivo) { showToast('No se encontró backup en Drive', 'error'); if (status) status.textContent = 'No hay backup disponible'; return; }
+    if (!archivo) {
+      showToast('No se encontró backup en Drive', 'error');
+      if (status) status.textContent = 'No hay backup disponible';
+      return;
+    }
     const fechaArchivo = new Date(archivo.modifiedTime).toLocaleString('es-AR');
-    if (!confirm(`¿Restaurar el backup del ${fechaArchivo}?\n\nEsto reemplazará los datos actuales.`)) { if (status) status.textContent = ''; return; }
+    if (!confirm(`Restaurar el backup del ${fechaArchivo}? Esto reemplazará los datos actuales.`)) {
+      if (status) status.textContent = '';
+      return;
+    }
     if (status) status.textContent = 'Descargando backup…';
     const descargar = await fetch(`https://www.googleapis.com/drive/v3/files/${archivo.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await descargar.json();
     if (status) status.textContent = 'Restaurando datos…';
     for (const [tabla, filas] of [['profesionales', data.profesionales], ['horariosfijos', data.horariosfijos], ['pagos', data.pagos]]) {
-      if (filas?.length) {
-        await fetch(`${SB_URL}/rest/v1/${tabla}`, { method: 'POST', headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(filas) });
+      if (filas && filas.length) {
+        await fetch(`${SB_URL}/rest/v1/${tabla}`, {
+          method: 'POST',
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+          body: JSON.stringify(filas)
+        });
       }
     }
-    if (status) status.textContent = `✓ Restaurado desde backup del ${fechaArchivo}`;
-    showToast('Datos restaurados correctamente ✓', 'success');
+    if (status) status.textContent = `Restaurado desde backup del ${fechaArchivo}`;
+    showToast('Datos restaurados correctamente', 'success');
   } catch(e) {
     if (status) status.textContent = 'Error al restaurar';
     showToast('Error: ' + (e.message || 'No se pudo restaurar'), 'error');
     googleAccessToken = null;
   } finally {
-    if (btn) { btn.textContent = '↩ Restaurar última copia'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Restaurar última copia'; btn.disabled = false; }
   }
 }
 

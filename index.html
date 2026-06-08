@@ -6,6 +6,7 @@
 <title>LUMA · Consultorios</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --bg: #f5ede8;
@@ -1072,7 +1073,7 @@
         <div class="card">
           <div class="form-group">
             <label class="form-label">Mes abonado</label>
-            <select class="form-select" id="pag-mes">
+            <select class="form-select" id="pag-mes" onchange="onMesPagoChange()">
               <option value="enero">Enero</option><option value="febrero">Febrero</option>
               <option value="marzo">Marzo</option><option value="abril">Abril</option>
               <option value="mayo">Mayo</option><option value="junio">Junio</option>
@@ -1108,7 +1109,7 @@
     <div id="view-grilla" class="view active">
       <div style="padding:0 0.5rem">
         <div class="section-title">Grilla Semanal</div>
-        <div class="section-sub">Consultorios · Mañana 8–12 / Tarde 13–17 · Tocá una celda para asignar</div>
+        <div class="section-sub">Consultorios · Mañana 8–12 / Tarde 14–18 · Tocá una celda para asignar</div>
       </div>
       <div class="grilla-view-wrap">
         <table class="grilla-table" id="grilla-tabla" style="width:100%;min-width:600px">
@@ -1139,8 +1140,8 @@
         <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
           <thead>
             <tr style="background:var(--surface2)">
-              <th style="padding:0.7rem 1rem;text-align:left;color:var(--text-muted);font-weight:500;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Profesional</th>
-              <th style="padding:0.7rem 1rem;text-align:right;color:var(--text-muted);font-weight:500;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Deuda actual</th>
+              <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--text-muted);font-weight:500;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Profesional / Meses</th>
+              <th style="padding:0.6rem 0.75rem;text-align:right;color:var(--text-muted);font-weight:500;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Saldo</th>
             </tr>
           </thead>
           <tbody id="deuda-global-body">
@@ -1148,8 +1149,8 @@
           </tbody>
           <tfoot>
             <tr style="background:var(--surface2);border-top:2px solid var(--border)">
-              <td style="padding:0.75rem 1rem;font-weight:700;font-size:0.9rem">Total</td>
-              <td id="deuda-global-total" style="padding:0.75rem 1rem;text-align:right;font-family:'DM Mono',monospace;font-weight:700;font-size:1rem;color:var(--red)">—</td>
+              <td style="padding:0.7rem 0.75rem;font-weight:700;font-size:0.9rem">Total</td>
+              <td id="deuda-global-total" style="padding:0.7rem 0.75rem;text-align:right;font-family:'DM Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--red)">—</td>
             </tr>
           </tfoot>
         </table>
@@ -1285,7 +1286,14 @@
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:480px">
       <div class="modal-handle"></div>
       <div id="resumen-contenido"><div class="loading"><div class="spinner"></div></div></div>
-      <button onclick="cerrarResumen()" style="width:100%;margin-top:0.75rem;background:none;border:none;color:var(--text-muted);font-size:0.85rem;cursor:pointer;padding:0.5rem">Cerrar</button>
+      <button onclick="cerrarResumen()" style="width:100%;margin-top:1rem;background:var(--surface2);
+        border:1px solid var(--border);border-bottom:3px solid #c5aea6;border-radius:8px;
+        color:var(--text);font-size:0.88rem;font-weight:600;cursor:pointer;padding:0.7rem;
+        font-family:'DM Sans',sans-serif;transition:all 0.12s ease"
+        onmousedown="this.style.transform='translateY(2px)';this.style.borderBottomWidth='1px'"
+        onmouseup="this.style.transform='';this.style.borderBottomWidth='3px'">
+        Cerrar
+      </button>
     </div>
   </div>
 
@@ -1315,10 +1323,56 @@
     </div>
   </div>
 
+  <!-- VIEW CONFIG -->
+  <div id="view-config" class="view" style="display:none; padding:1.25rem; padding-bottom:5rem;">
+    <div class="section-title">Configuración</div>
+
+    <!-- Mi cuenta -->
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-row" style="margin-bottom:0.75rem">
+        <div class="card-name">Mi cuenta</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Usuario conectado</div>
+      <div id="config-email-display" style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--text);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Rol</div>
+      <div id="config-rol-display" style="font-size:0.85rem;font-weight:600;color:var(--gold);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
+      <button class="btn-secondary" onclick="cerrarSesion()" style="width:100%">Cerrar sesión</button>
+    </div>
+
+    <!-- Backup -->
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-row" style="margin-bottom:0.75rem">
+        <div class="card-name">Copia de seguridad</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
+        Guarda todos los datos en Google Drive. El archivo se llama <span style="font-family:'DM Mono',monospace">luma_backup.json</span> y se sobreescribe en cada backup.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <button class="btn-primary" onclick="hacerBackup()" id="btn-backup">☁ Hacer backup ahora</button>
+        <button class="btn-secondary" onclick="restaurarBackup()" id="btn-restore">↩ Restaurar última copia</button>
+      </div>
+      <div id="backup-status" style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);text-align:center;min-height:1.2em"></div>
+    </div>
+
+    <!-- Gestión de usuarios — solo admin -->
+    <div id="config-usuarios-section" class="card" style="display:none">
+      <div class="card-row" style="margin-bottom:0.75rem">
+        <div class="card-name">Usuarios</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
+        Los usuarios se crean desde el panel de Supabase. Aquí podés ver los perfiles registrados.
+      </div>
+      <div id="config-usuarios-list" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    </div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <nav class="app-nav">
     <button class="nav-btn active" onclick="showView('grilla',this); renderGrilla()">
       <span class="nav-icon">▦</span>Grilla
+    </button>
+    <button class="nav-btn" onclick="showView('consultorios',this); cargarConsultorios()">
+      <span class="nav-icon">⊞</span>Consult.
     </button>
     <button class="nav-btn" onclick="showView('profesionales',this)">
       <span class="nav-icon">⊙</span>Médicos
@@ -1326,14 +1380,14 @@
     <button class="nav-btn" onclick="showView('pagos',this)">
       <span class="nav-icon">◎</span>Pagos
     </button>
-    <button class="nav-btn" onclick="showView('consultorios',this); cargarConsultorios()">
-      <span class="nav-icon">⊞</span>Consult.
-    </button>
     <button class="nav-btn" onclick="showView('deuda',this); cargarDeudaGlobal()">
       <span class="nav-icon">⊟</span>Deuda
     </button>
     <button class="nav-btn" onclick="showView('cierre',this); iniciarCierre()">
       <span class="nav-icon">⊕</span>Cierre
+    </button>
+    <button class="nav-btn" id="nav-config" onclick="showView('config',this); cargarSeccionConfig()">
+      <span class="nav-icon">⚙</span>Config
     </button>
   </nav>
 </div>
@@ -1342,8 +1396,12 @@
 // ── STATE ──
 const SB_URL = 'https://csqvwbolnrukpcldboyi.supabase.co';
 const SB_KEY = 'sb_publishable_DnKxYHutSfhCYS0RUWE30A_JwUPoKXJ';
+const GOOGLE_CLIENT_ID = '771429720007-ttbq7fa3mff3btos8tqslr7fik3cv7f3.apps.googleusercontent.com';
+const BACKUP_FILENAME = 'luma_backup.json';
 let profesionales = [];
 let currentUser = null;
+let currentRol = null;
+let googleAccessToken = null;
 
 // ── SUPABASE HELPERS ──
 async function sbFetch(table, opts = {}) {
@@ -1427,6 +1485,7 @@ async function loginConEmail() {
       user: data.user
     }));
 
+    await cargarRolUsuario(data.user.email);
     document.getElementById('status-text').textContent = email.split('@')[0];
     iniciarApp();
   } catch(e) {
@@ -1507,8 +1566,247 @@ async function cerrarSesion() {
   if (btn) { btn.textContent = 'Ingresar →'; btn.disabled = false; }
 }
 
-// Token de auth para las requests
-let AUTH_TOKEN = null;
+// ── ROLES ──
+async function cargarRolUsuario(email) {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/perfiles?email=eq.${encodeURIComponent(email)}&select=rol`, {
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      currentRol = data[0]?.rol || 'secretaria';
+    } else {
+      currentRol = 'secretaria';
+    }
+  } catch(e) {
+    currentRol = 'secretaria';
+  }
+}
+
+function aplicarPermisosPorRol() {
+  const esAdmin = currentRol === 'admin';
+  const secUsers = document.getElementById('config-usuarios-section');
+  if (secUsers) secUsers.style.display = esAdmin ? 'block' : 'none';
+}
+
+// ── SECCIÓN CONFIG ──
+async function cargarSeccionConfig() {
+  // Mostrar email y rol
+  const emailEl = document.getElementById('config-email-display');
+  const rolEl = document.getElementById('config-rol-display');
+  if (emailEl) emailEl.textContent = currentUser?.email || '—';
+  if (rolEl) rolEl.textContent = currentRol === 'admin' ? '👑 Administrador' : '📋 Secretaria';
+
+  aplicarPermisosPorRol();
+
+  if (currentRol === 'admin') {
+    await cargarListaUsuarios();
+  }
+}
+
+async function cargarListaUsuarios() {
+  const lista = document.getElementById('config-usuarios-list');
+  if (!lista) return;
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/perfiles?select=email,rol`, {
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    lista.innerHTML = data.map(u => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+        <span style="font-family:'DM Mono',monospace;font-size:0.8rem">${u.email}</span>
+        <span style="font-size:0.75rem;font-weight:600;color:${u.rol === 'admin' ? 'var(--gold)' : 'var(--blue)'}">${u.rol}</span>
+      </div>
+    `).join('') || '<div style="color:var(--text-muted);font-size:0.8rem">Sin usuarios registrados</div>';
+  } catch(e) {
+    lista.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem">Error al cargar usuarios</div>';
+  }
+}
+
+// ── BACKUP GOOGLE DRIVE ──
+async function obtenerTokenGoogle() {
+  return new Promise((resolve, reject) => {
+    if (googleAccessToken) { resolve(googleAccessToken); return; }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: (resp) => {
+        if (resp.error) { reject(new Error(resp.error)); return; }
+        googleAccessToken = resp.access_token;
+        resolve(googleAccessToken);
+      }
+    });
+    client.requestAccessToken();
+  });
+}
+
+async function hacerBackup() {
+  const btn = document.getElementById('btn-backup');
+  const status = document.getElementById('backup-status');
+  if (btn) { btn.textContent = '☁ Subiendo…'; btn.disabled = true; }
+  if (status) status.textContent = 'Conectando con Google Drive…';
+
+  try {
+    const token = await obtenerTokenGoogle();
+
+    // Recolectar datos de Supabase
+    const [profs, horarios, pagos] = await Promise.all([
+      sbFetch('profesionales', { limit: 1000 }),
+      sbFetch('horariosfijos', { limit: 1000 }),
+      sbFetch('pagos', { limit: 5000 })
+    ]);
+
+    const backup = {
+      fecha: new Date().toISOString(),
+      version: 'v5',
+      profesionales: profs,
+      horariosfijos: horarios,
+      pagos: pagos
+    };
+
+    const contenido = JSON.stringify(backup, null, 2);
+
+    // Buscar si ya existe el archivo
+    if (status) status.textContent = 'Buscando archivo existente…';
+    const buscar = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name)`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    const buscarData = await buscar.json();
+    const archivoExistente = buscarData.files?.[0];
+
+    if (status) status.textContent = 'Subiendo datos…';
+
+    if (archivoExistente) {
+      // Actualizar existente
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${archivoExistente.id}?uploadType=media`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: contenido
+      });
+    } else {
+      // Crear nuevo
+      const metadata = { name: BACKUP_FILENAME, mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', new Blob([contenido], { type: 'application/json' }));
+      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: form
+      });
+    }
+
+    const fecha = new Date().toLocaleString('es-AR');
+    if (status) status.textContent = `✓ Backup realizado el ${fecha}`;
+    showToast('Backup subido a Google Drive ✓', 'success');
+  } catch(e) {
+    if (status) status.textContent = 'Error al hacer backup';
+    showToast('Error: ' + (e.message || 'No se pudo conectar con Drive'), 'error');
+    googleAccessToken = null;
+  } finally {
+    if (btn) { btn.textContent = '☁ Hacer backup ahora'; btn.disabled = false; }
+  }
+}
+
+async function restaurarBackup() {
+  const btn = document.getElementById('btn-restore');
+  const status = document.getElementById('backup-status');
+  if (btn) { btn.textContent = '↩ Buscando…'; btn.disabled = true; }
+  if (status) status.textContent = 'Conectando con Google Drive…';
+
+  try {
+    const token = await obtenerTokenGoogle();
+
+    const buscar = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name,modifiedTime)`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    const buscarData = await buscar.json();
+    const archivo = buscarData.files?.[0];
+
+    if (!archivo) {
+      showToast('No se encontró ningún backup en Drive', 'error');
+      if (status) status.textContent = 'No hay backup disponible';
+      return;
+    }
+
+    const fechaArchivo = new Date(archivo.modifiedTime).toLocaleString('es-AR');
+    const confirmar = confirm(`¿Restaurar el backup del ${fechaArchivo}?\n\nEsto reemplazará los datos actuales.`);
+    if (!confirmar) {
+      if (status) status.textContent = '';
+      return;
+    }
+
+    if (status) status.textContent = 'Descargando backup…';
+    const descargar = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${archivo.id}?alt=media`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    const data = await descargar.json();
+
+    if (status) status.textContent = 'Restaurando datos…';
+
+    // Restaurar cada tabla (upsert)
+    if (data.profesionales?.length) {
+      await fetch(`${SB_URL}/rest/v1/profesionales`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(data.profesionales)
+      });
+    }
+    if (data.horariosfijos?.length) {
+      await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(data.horariosfijos)
+      });
+    }
+    if (data.pagos?.length) {
+      await fetch(`${SB_URL}/rest/v1/pagos`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(data.pagos)
+      });
+    }
+
+    if (status) status.textContent = `✓ Restaurado desde backup del ${fechaArchivo}`;
+    showToast('Datos restaurados correctamente ✓', 'success');
+
+    // Recargar la app
+    await cargarDashboard();
+    await cargarProfesionales();
+    await cargarHorarios();
+    await cargarPagos();
+    await cargarGrilla();
+
+  } catch(e) {
+    if (status) status.textContent = 'Error al restaurar';
+    showToast('Error: ' + (e.message || 'No se pudo restaurar'), 'error');
+    googleAccessToken = null;
+  } finally {
+    if (btn) { btn.textContent = '↩ Restaurar última copia'; btn.disabled = false; }
+  }
+}
+
+// ── FIN BACKUP ──
+
 
 // ── INIT ──
 async function iniciarApp() {
@@ -1932,7 +2230,9 @@ async function guardarHorario() {
 
 // ── PAGOS ──
 let todosLosPagos = [];
-let pagoEditandoId = null; // id del pago en edición
+let pagoEditandoId = null;
+let _liqProfActual = []; // liquidaciones del profesional seleccionado
+let _pagosPorMesProfActual = {}; // pagos agrupados por mes del prof
 
 async function cargarPagos() {
   try {
@@ -1941,6 +2241,11 @@ async function cargarPagos() {
       order: 'fecha.desc', limit: 1000
     });
   } catch(e) { todosLosPagos = []; }
+}
+
+// Normalizar mes: "mayo 2026" → "mayo" | "mayo" → "mayo"
+function normMes(s) {
+  return (s || '').toLowerCase().trim().split(' ')[0];
 }
 
 async function onProfPagoChange() {
@@ -1962,11 +2267,7 @@ async function onProfPagoChange() {
     todosLosPagos = todosLosPagos.filter(p => p.id_profesional !== idProf).concat(pagosProf);
   } catch(e) { console.error('Error cargando pagos:', e); }
 
-  // Normalizar función: extrae solo el nombre del mes sin año
-  // "mayo 2026" → "mayo" | "mayo" → "mayo"
-  function normMes(s) {
-    return (s || '').toLowerCase().trim().split(' ')[0];
-  }
+  // normMes está definida a nivel global
 
   // Sumar pagos por nombre-de-mes (sin año)
   const pagosPorMes = {};
@@ -2027,22 +2328,39 @@ async function onProfPagoChange() {
       }
     }
 
-    // Auto-completar primer mes con deuda pendiente
+    // Guardar datos para uso en onMesPagoChange
+    _liqProfActual = liquidaciones;
+    _pagosPorMesProfActual = pagosPorMes;
+
+    // Auto-seleccionar el mes más viejo con deuda pendiente
     if (!pagoEditandoId) {
-      const primerMesDeuda = liquidaciones.find(l => {
+      // Ordenar liquidaciones por fecha (más vieja primero)
+      const liqOrdenadas = [...liquidaciones].sort((a,b) => {
+        const _m = ['enero','febrero','marzo','abril','mayo','junio',
+                    'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+        const idxA = _m.indexOf(normMes(a.mes_liquidado));
+        const idxB = _m.indexOf(normMes(b.mes_liquidado));
+        return idxA - idxB;
+      });
+
+      const primerMesDeuda = liqOrdenadas.find(l => {
         const k = normMes(l.mes_liquidado);
         return (parseFloat(l.monto_total)||0) - (pagosPorMes[k]||0) > 0;
       });
+
       if (primerMesDeuda) {
         const k = normMes(primerMesDeuda.mes_liquidado);
-        const saldoPend = (parseFloat(primerMesDeuda.monto_total)||0) - (pagosPorMes[k]||0);
-        const conceptoWrap = document.getElementById('pag-concepto-wrap');
-        conceptoWrap.style.display = 'block';
-        conceptoWrap.textContent = `${primerMesDeuda.mes_liquidado} · Deuda pendiente: $${fmt(saldoPend)}`;
-        document.getElementById('pag-monto').value = saldoPend;
+        // Seleccionar el mes en el dropdown
         for (let opt of document.getElementById('pag-mes').options) {
           if (opt.value === k || k.includes(opt.value)) { opt.selected = true; break; }
         }
+        // Actualizar monto y concepto
+        onMesPagoChange();
+      } else {
+        // No hay deuda — limpiar
+        document.getElementById('pag-monto').value = '';
+        const conceptoWrap = document.getElementById('pag-concepto-wrap');
+        if (conceptoWrap) { conceptoWrap.style.display = 'none'; }
       }
     }
   }
@@ -2124,6 +2442,52 @@ async function borrarPago(idPago) {
   } catch(e) { showToast('Error al borrar: ' + e.message, 'error'); console.error(e); }
 }
 
+function onMesPagoChange() {
+  if (pagoEditandoId) return; // no interferir al editar
+  const mesEl = document.getElementById('pag-mes');
+  const mesSeleccionado = (mesEl?.value || '').toLowerCase();
+  const conceptoWrap = document.getElementById('pag-concepto-wrap');
+  const montoInput = document.getElementById('pag-monto');
+
+  if (!mesSeleccionado || !_liqProfActual.length) return;
+
+  // Buscar la liquidación para este mes
+  const liq = _liqProfActual.find(l => normMes(l.mes_liquidado) === mesSeleccionado);
+
+  if (liq) {
+    const deudaTotal = parseFloat(liq.monto_total) || 0;
+    const pagado = _pagosPorMesProfActual[mesSeleccionado] || 0;
+    const saldo = deudaTotal - pagado;
+
+    if (saldo > 0) {
+      montoInput.value = saldo;
+      if (conceptoWrap) {
+        conceptoWrap.style.display = 'block';
+        conceptoWrap.style.borderColor = 'var(--gold)';
+        conceptoWrap.style.color = '';
+        conceptoWrap.textContent = `${liq.mes_liquidado} · Deuda: $${fmt(deudaTotal)} · Pagado: $${fmt(pagado)} · Saldo: $${fmt(saldo)}`;
+      }
+    } else {
+      montoInput.value = 0;
+      if (conceptoWrap) {
+        conceptoWrap.style.display = 'block';
+        conceptoWrap.style.borderColor = 'var(--green)';
+        conceptoWrap.style.color = 'var(--green)';
+        conceptoWrap.textContent = `${liq.mes_liquidado} · ✓ Pagado completo ($${fmt(pagado)})`;
+      }
+    }
+  } else {
+    // No hay liquidación para ese mes
+    montoInput.value = '';
+    if (conceptoWrap) {
+      conceptoWrap.style.display = 'block';
+      conceptoWrap.style.borderColor = 'var(--text-dim)';
+      conceptoWrap.style.color = 'var(--text-dim)';
+      conceptoWrap.textContent = `No hay liquidación para ${mesSeleccionado}`;
+    }
+  }
+}
+
 async function guardarPago() {
   const idProf  = document.getElementById('pag-prof').value;
   const monto   = parseFloat(document.getElementById('pag-monto').value);
@@ -2171,14 +2535,17 @@ async function guardarPago() {
     // Validar que no se pague antes del mes de inicio del profesional
     const prof = profesionales.find(p => p.ID_Profesional === parseInt(idProf));
     if (prof?.mes_inicio) {
-      const fechaInicio = new Date(prof.mes_inicio + 'T12:00:00');
       const mesesNombres = ['enero','febrero','marzo','abril','mayo','junio',
                             'julio','agosto','septiembre','octubre','noviembre','diciembre'];
       const mesPagoIdx = mesesNombres.indexOf(mes.toLowerCase());
       const anioActual = new Date().getFullYear();
       if (mesPagoIdx >= 0) {
-        const fechaPago = new Date(anioActual, mesPagoIdx, 1);
-        if (fechaPago < fechaInicio) {
+        // Comparar solo mes y año (ignorar día/hora)
+        const inicioDate = new Date(prof.mes_inicio + 'T12:00:00');
+        const mesInicio = inicioDate.getMonth(); // 0-based
+        const anioInicio = inicioDate.getFullYear();
+        // El mes de pago es anterior al mes de inicio → bloquear
+        if (anioActual < anioInicio || (anioActual === anioInicio && mesPagoIdx < mesInicio)) {
           showToast(`${prof.Nombre_Medico} comenzó en ${fmtFecha(prof.mes_inicio)}. No se puede pagar meses anteriores.`, 'error'); return;
         }
       }
@@ -2213,15 +2580,23 @@ async function guardarPago() {
       });
       document.getElementById('pag-monto').value = '';
       document.getElementById('pag-concepto').value = '';
-      document.getElementById('pag-concepto-wrap').style.display = 'none';
+      const cw = document.getElementById('pag-concepto-wrap');
+      if (cw) cw.style.display = 'none';
     }
-    // Actualizar historial de deuda del prof + deuda global simultáneamente
+  } catch(e) {
+    showToast('Error al guardar pago', 'error');
+    console.error(e);
+    return;
+  }
+
+  // Actualizar vistas — errores acá no afectan al pago ya guardado
+  try {
     await Promise.all([
       onProfPagoChange(),
       cargarDeudaGlobal(),
       cargarDashboard()
     ]);
-  } catch(e) { showToast('Error al guardar pago', 'error'); console.error(e); }
+  } catch(e2) { console.warn('Error actualizando vistas:', e2); }
 }
 
 // ── GRILLA SEMANAL ──
@@ -2229,8 +2604,8 @@ const DIAS = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
 const BLOQUES = [
   { key:'M1', label:'Mañana 1ª', hi:'08:00', hf:'10:00', turno:'Mañana' },
   { key:'M2', label:'Mañana 2ª', hi:'10:00', hf:'12:00', turno:'Mañana' },
-  { key:'T1', label:'Tarde 1ª',  hi:'13:00', hf:'15:00', turno:'Tarde'  },
-  { key:'T2', label:'Tarde 2ª',  hi:'15:00', hf:'17:00', turno:'Tarde'  },
+  { key:'T1', label:'Tarde 1ª',  hi:'14:00', hf:'16:00', turno:'Tarde'  },
+  { key:'T2', label:'Tarde 2ª',  hi:'16:00', hf:'18:00', turno:'Tarde'  },
 ];
 // Turno completo: M = M1+M2 (08-12), T = T1+T2 (13-17)
 const CONSULTORIOS = ['consul 1','consul 2','consul 3','consul 4','consul 5','consul 6'];
@@ -2242,18 +2617,21 @@ let modalCtx = null;
 function _bloqueDeHora(hi, hf) {
   const h = (hi||'').substring(0,5);
   const hfin = (hf||'').substring(0,5);
+  // Mañana
   if (h==='08:00'&&hfin==='10:00') return ['M1'];
   if (h==='10:00'&&hfin==='12:00') return ['M2'];
-  if (h==='08:00'&&hfin==='12:00') return ['M1','M2']; // turno completo mañana
-  if (h==='13:00'&&hfin==='15:00') return ['T1'];
-  if (h==='15:00'&&hfin==='17:00') return ['T2'];
-  if (h==='13:00'&&hfin==='17:00') return ['T1','T2']; // turno completo tarde
-  // fallback por hora de inicio
-  if (h>='06:00'&&h<'10:00') return ['M1','M2'];
-  if (h>='10:00'&&h<'13:00') return ['M2'];
-  if (h>='13:00'&&h<'15:00') return ['T1','T2'];
-  if (h>='15:00'&&h<'20:00') return ['T2'];
-  return [];
+  if (h==='08:00'&&hfin==='12:00') return ['M1','M2'];
+  // Tarde (nuevo 14-18)
+  if (h==='14:00'&&hfin==='16:00') return ['T1'];
+  if (h==='16:00'&&hfin==='18:00') return ['T2'];
+  if (h==='14:00'&&hfin==='18:00') return ['T1','T2'];
+  // Horarios personalizados: ubicar en el turno según hora de inicio
+  const horaNum = parseInt(h.split(':')[0]);
+  if (horaNum >= 6 && horaNum < 10) return ['M1','M2'];
+  if (horaNum >= 10 && horaNum < 13) return ['M2'];
+  if (horaNum >= 13 && horaNum < 16) return ['T1','T2'];
+  if (horaNum >= 16) return ['T2'];
+  return ['T1','T2'];
 }
 
 async function cargarGrilla() {
@@ -2324,7 +2702,7 @@ function _renderGrillaHTML() {
     ['Mañana','Tarde'].forEach(turnoLabel => {
       const bsDelTurno = BLOQUES.filter(b => b.turno === turnoLabel);
       const b1 = bsDelTurno[0], b2 = bsDelTurno[1];
-      const rango = turnoLabel === 'Mañana' ? '8–12' : '13–17';
+      const rango = turnoLabel === 'Mañana' ? '8–12' : '14–18';
       html += `<tr>`;
       html += `<td class="grilla-dia-cell">
         <div class="grilla-dia">${dia}</div>
@@ -2367,23 +2745,61 @@ function _renderGrillaHTML() {
 }
 
 function abrirModal(dia, bk1, bk2, consul) {
-  modalHoras = 4;
   const bloquesFoco = [bk1, bk2].filter(Boolean);
   const turnoLabel = BLOQUES.find(b => b.key === bloquesFoco[0])?.turno;
   const bsDelTurno = BLOQUES.filter(b => b.turno === turnoLabel);
   const b1 = bsDelTurno[0], b2 = bsDelTurno[1];
-  const rango = turnoLabel === 'Mañana' ? '8–12' : '13–17';
+  const rango = turnoLabel === 'Mañana' ? '8–12' : '14–18';
 
   const a1 = grillaDatos[dia]?.[b1.key]?.[consul];
   const a2 = grillaDatos[dia]?.[b2.key]?.[consul];
   const asigPrincipal = a1 || a2 || null;
+  const mismoHorario = a1 && a2 && a1.ID_Horario === a2.ID_Horario;
 
   modalCtx = { dia, bk1: b1.key, bk2: b2.key, consul, asig: asigPrincipal };
 
   const consulLabel = consul.replace(/consul\s*(\d+)/i, 'Consul $1');
   document.getElementById('modal-titulo').textContent = `${consulLabel} · ${dia}`;
-  document.getElementById('modal-sub').textContent = asigPrincipal
-    ? `Asignado: ${asigPrincipal.nombre_medico}` : 'Turno libre';
+
+  // Detectar modo actual
+  let modoInicial = 4;
+  let esCustom = false;
+  if (asigPrincipal) {
+    const hi = (asigPrincipal.hora_inicio || '').substring(0,5);
+    const hf = (asigPrincipal.hora_fin || '').substring(0,5);
+    // Verificar si coincide con turno estándar
+    const esMananaCompleta = (hi === '08:00' && hf === '12:00');
+    const esTardeCompleta  = (hi === '14:00' && hf === '18:00');
+    const esMediaManana    = (hi === '08:00' && hf === '10:00') || (hi === '10:00' && hf === '12:00');
+    const esMediaTarde     = (hi === '14:00' && hf === '16:00') || (hi === '16:00' && hf === '18:00');
+    if (esMananaCompleta || esTardeCompleta || mismoHorario) modoInicial = 4;
+    else if (esMediaManana || esMediaTarde) modoInicial = 2;
+    else { modoInicial = 'custom'; esCustom = true; }
+  }
+  modalHoras = modoInicial;
+
+  // Info del horario actual
+  let infoActual = '';
+  if (asigPrincipal) {
+    const hi = (asigPrincipal.hora_inicio || '').substring(0,5);
+    const hf = (asigPrincipal.hora_fin || '').substring(0,5);
+    infoActual = `
+      <div style="background:rgba(193,122,111,0.1);border:1px solid rgba(193,122,111,0.25);
+                  border-radius:8px;padding:0.65rem 0.75rem;margin-bottom:1rem;font-size:0.82rem">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-weight:700;color:var(--text)">${asigPrincipal.nombre_medico}</span>
+          </div>
+          <span style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:600;font-size:0.85rem">${hi} – ${hf}</span>
+        </div>
+        ${!mismoHorario && a1 && a2 ? `
+        <div style="margin-top:0.4rem;padding-top:0.4rem;border-top:1px solid rgba(193,122,111,0.2);display:flex;justify-content:space-between;font-size:0.78rem">
+          <span style="color:var(--text-muted)">${a2.nombre_medico}</span>
+          <span style="font-family:'DM Mono',monospace;color:var(--gold)">${(a2.hora_inicio||'').substring(0,5)} – ${(a2.hora_fin||'').substring(0,5)}</span>
+        </div>` : ''}
+      </div>`;
+  }
+  document.getElementById('modal-sub').textContent = asigPrincipal ? 'Turno asignado' : 'Turno libre';
 
   const mkOpts = (asig) =>
     `<option value="">— Libre —</option>` +
@@ -2392,27 +2808,33 @@ function abrirModal(dia, bk1, bk2, consul) {
         ${asig?.id_profesional===p.ID_Profesional?'selected':''}>${p.Nombre_Medico}</option>`
     ).join('');
 
+  // Estilos botones
+  const activo = 'flex:1;padding:0.5rem 0.3rem;font-size:0.72rem;border-radius:7px;cursor:pointer;background:var(--gold);color:var(--surface);border:1px solid var(--gold);font-weight:600';
+  const inactivo = 'flex:1;padding:0.5rem 0.3rem;font-size:0.72rem;border-radius:7px;cursor:pointer;background:none;color:var(--text-muted);border:1px solid var(--border)';
+
   document.getElementById('modal-lista-profs').innerHTML = `
+    ${infoActual}
     <div style="margin-bottom:1rem">
       <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.5rem">Duración</div>
-      <div style="display:flex;gap:0.5rem">
+      <div style="display:flex;gap:0.4rem">
         <button id="btn-4hs" onclick="modalSetHoras(4)"
-          style="flex:1;padding:0.5rem;font-size:0.78rem;border-radius:7px;cursor:pointer;
-                 background:var(--gold);color:var(--surface);border:1px solid var(--gold);font-weight:600">
-          4hs · ${rango}</button>
+          style="${modoInicial===4?activo:inactivo}">4hs</button>
         <button id="btn-2hs" onclick="modalSetHoras(2)"
-          style="flex:1;padding:0.5rem;font-size:0.78rem;border-radius:7px;cursor:pointer;
-                 background:none;color:var(--text-muted);border:1px solid var(--border)">
-          2hs (dividir)</button>
+          style="${modoInicial===2?activo:inactivo}">2hs</button>
+        <button id="btn-custom" onclick="modalSetHoras('custom')"
+          style="${modoInicial==='custom'?activo.replace('flex:1','flex:1.3'):inactivo.replace('flex:1','flex:1.3')}">Personalizado</button>
       </div>
     </div>
-    <div id="modal-horas-contenido">
-      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.4rem">Profesional · ${rango}</div>
-      <select id="modal-prof-select" class="form-select" style="width:100%;margin-bottom:0.75rem">${mkOpts(asigPrincipal)}</select>
-    </div>
-    <button class="btn-submit" onclick="confirmarAsignacion()" style="margin-top:0.25rem">Guardar</button>`;
+    <div id="modal-horas-contenido"></div>
+    <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+      <button class="btn-submit" onclick="confirmarAsignacion()" style="flex:2;margin-top:0">Guardar</button>
+      <button class="btn-secondary" onclick="cerrarModal()" style="flex:1">Cancelar</button>
+    </div>`;
 
-  document.getElementById('modal-btn-borrar').style.display = asigPrincipal ? 'block' : 'none';
+  // Renderizar el contenido del modo activo
+  modalSetHoras(modoInicial);
+
+  document.getElementById('modal-btn-borrar').style.display = 'none';
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
@@ -2422,14 +2844,17 @@ function modalSetHoras(hs) {
   modalHoras = hs;
   const btn4 = document.getElementById('btn-4hs');
   const btn2 = document.getElementById('btn-2hs');
+  const btnC = document.getElementById('btn-custom');
   if (!btn4) return;
-  if (hs === 4) {
-    btn4.style.cssText = 'flex:1;padding:0.5rem;font-size:0.78rem;border-radius:7px;cursor:pointer;background:var(--gold);color:var(--surface);border:1px solid var(--gold);font-weight:600';
-    btn2.style.cssText = 'flex:1;padding:0.5rem;font-size:0.78rem;border-radius:7px;cursor:pointer;background:none;color:var(--text-muted);border:1px solid var(--border)';
-  } else {
-    btn2.style.cssText = 'flex:1;padding:0.5rem;font-size:0.78rem;border-radius:7px;cursor:pointer;background:var(--gold);color:var(--surface);border:1px solid var(--gold);font-weight:600';
-    btn4.style.cssText = 'flex:1;padding:0.5rem;font-size:0.78rem;border-radius:7px;cursor:pointer;background:none;color:var(--text-muted);border:1px solid var(--border)';
-  }
+
+  const activo = 'flex:1;padding:0.5rem 0.3rem;font-size:0.72rem;border-radius:7px;cursor:pointer;background:var(--gold);color:var(--surface);border:1px solid var(--gold);font-weight:600';
+  const inactivo = 'flex:1;padding:0.5rem 0.3rem;font-size:0.72rem;border-radius:7px;cursor:pointer;background:none;color:var(--text-muted);border:1px solid var(--border)';
+  const inactivoCustom = inactivo.replace('flex:1;', 'flex:1.3;');
+  const activoCustom = activo.replace('flex:1;', 'flex:1.3;');
+
+  btn4.style.cssText = hs === 4 ? activo : inactivo;
+  btn2.style.cssText = hs === 2 ? activo : inactivo;
+  if (btnC) btnC.style.cssText = hs === 'custom' ? activoCustom : inactivoCustom;
 
   const { dia, bk1, bk2, consul, asig } = modalCtx;
   const bsDelTurno = BLOQUES.filter(b => b.turno === BLOQUES.find(x=>x.key===bk1)?.turno);
@@ -2444,25 +2869,96 @@ function modalSetHoras(hs) {
     ).join('');
 
   const contenido = document.getElementById('modal-horas-contenido');
+
   if (hs === 4) {
-    const rango = b1.turno === 'Mañana' ? '8–12' : '13–17';
+    const rango = b1.turno === 'Mañana' ? '8–12' : '14–18';
     contenido.innerHTML = `
       <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.4rem">Profesional · ${rango}</div>
       <select id="modal-prof-select" class="form-select" style="width:100%;margin-bottom:0.75rem">${mkOpts(asig)}</select>`;
-  } else {
+  } else if (hs === 2) {
     contenido.innerHTML = `
       <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.4rem">${b1.hi}–${b1.hf}</div>
       <select id="modal-prof-select-1" class="form-select" style="width:100%;margin-bottom:0.75rem">${mkOpts(a1)}</select>
       <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.4rem">${b2.hi}–${b2.hf}</div>
       <select id="modal-prof-select-2" class="form-select" style="width:100%;margin-bottom:0.75rem">${mkOpts(a2)}</select>`;
+  } else {
+    // PERSONALIZADO: pre-llenar con horarios actuales si existen
+    const { dia: _dia, consul: _consul } = modalCtx;
+    const defHi = b1.turno === 'Mañana' ? '08:00' : '14:00';
+    const defHf = b1.turno === 'Mañana' ? '12:00' : '18:00';
+    // Recopilar bloques existentes del turno
+    const bloquesExist = [];
+    const visitados = new Set();
+    [a1, a2].forEach(a => {
+      if (a && !visitados.has(a.ID_Horario)) {
+        visitados.add(a.ID_Horario);
+        bloquesExist.push(a);
+      }
+    });
+
+    const mkBloque = (hi, hf, profAsig) => `
+      <div class="custom-bloque" style="border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;position:relative">
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+          <div style="flex:1">
+            <label style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:0.2rem">Inicio</label>
+            <input type="time" class="custom-hi form-input" value="${hi}" style="margin:0;padding:0.5rem">
+          </div>
+          <div style="flex:1">
+            <label style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:0.2rem">Fin</label>
+            <input type="time" class="custom-hf form-input" value="${hf}" style="margin:0;padding:0.5rem">
+          </div>
+        </div>
+        <select class="custom-prof form-select" style="width:100%">${mkOpts(profAsig)}</select>
+      </div>`;
+
+    const bloquesHTML = bloquesExist.length
+      ? bloquesExist.map(a => mkBloque(
+          (a.hora_inicio||defHi).substring(0,5),
+          (a.hora_fin||defHf).substring(0,5),
+          a
+        )).join('')
+      : mkBloque(defHi, defHf, null);
+
+    contenido.innerHTML = `
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px">
+        Definí el horario exacto. Podés agregar más de un bloque al mismo consultorio.
+      </div>
+      <div id="custom-bloques">${bloquesHTML}</div>
+      <button onclick="agregarBloqueCustom()" class="btn-secondary" style="width:100%;margin-bottom:0.5rem;font-size:0.8rem">
+        + Agregar otro bloque
+      </button>`;
   }
 }
 
+function agregarBloqueCustom() {
+  const cont = document.getElementById('custom-bloques');
+  if (!cont) return;
+  const mkOpts = `<option value="">— Libre —</option>` +
+    profesionales.map(p => `<option value="${p.ID_Profesional}" data-nombre="${p.Nombre_Medico}">${p.Nombre_Medico}</option>`).join('');
+  const div = document.createElement('div');
+  div.className = 'custom-bloque';
+  div.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;position:relative';
+  div.innerHTML = `
+    <button onclick="this.parentElement.remove()" style="position:absolute;top:0.5rem;right:0.5rem;background:none;border:none;color:var(--red);cursor:pointer;font-size:0.9rem">✕</button>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+      <div style="flex:1">
+        <label style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:0.2rem">Inicio</label>
+        <input type="time" class="custom-hi form-input" value="17:00" style="margin:0;padding:0.5rem">
+      </div>
+      <div style="flex:1">
+        <label style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:0.2rem">Fin</label>
+        <input type="time" class="custom-hf form-input" value="21:00" style="margin:0;padding:0.5rem">
+      </div>
+    </div>
+    <select class="custom-prof form-select" style="width:100%">${mkOpts}</select>`;
+  cont.appendChild(div);
+}
+
 function cerrarModal(e) {
-  if (!e || e.target === document.getElementById('modal-overlay')) {
-    document.getElementById('modal-overlay').classList.add('hidden');
-    modalCtx = null; modalHoras = 4;
-  }
+  // Si hay evento, solo cerrar si clickeó el overlay (fondo)
+  if (e && e.target && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.add('hidden');
+  modalCtx = null; modalHoras = 4;
 }
 
 async function asignarProf(idProf, nombre) {
@@ -2490,7 +2986,36 @@ async function confirmarAsignacion() {
   const b1 = bsDelTurno[0], b2 = bsDelTurno[1];
 
   try {
-    if (modalHoras === 4) {
+    if (modalHoras === 'custom') {
+      // Modo personalizado: borrar todos los bloques del turno y crear los custom
+      const idsABorrar = new Set();
+      for (const bk of [b1.key, b2.key]) {
+        const a = grillaDatos[dia]?.[bk]?.[consul];
+        if (a) idsABorrar.add(a.ID_Horario);
+      }
+      for (const id of idsABorrar) {
+        await sbFetch('horariosfijos', { method: 'DELETE', filters: [`ID_Horario=eq.${id}`] });
+      }
+      // Crear cada bloque personalizado
+      const bloques = document.querySelectorAll('#custom-bloques .custom-bloque');
+      let creados = 0;
+      for (const bloque of bloques) {
+        const hi = bloque.querySelector('.custom-hi')?.value;
+        const hf = bloque.querySelector('.custom-hf')?.value;
+        const sel = bloque.querySelector('.custom-prof');
+        const idProf = parseInt(sel?.value) || 0;
+        if (idProf && hi && hf) {
+          if (hi >= hf) { showToast('La hora de fin debe ser mayor al inicio', 'error'); return; }
+          await sbFetch('horariosfijos', { method: 'POST', body: {
+            ID_Profesional: idProf, nombreConsultorio: consul, Dia_Semana: dia,
+            Hora_inicio: hi, Hora_fin: hf,
+            Mes_inicio: new Date().toISOString().substring(0,7)+'-01'
+          }});
+          creados++;
+        }
+      }
+      showToast(creados ? `${creados} bloque(s) guardado(s) ✓` : 'Consultorio liberado ✓', 'success');
+    } else if (modalHoras === 4) {
       const sel = document.getElementById('modal-prof-select');
       const idProf = parseInt(sel?.value) || 0;
       const nombre = sel?.options[sel.selectedIndex]?.dataset.nombre || '';
@@ -2600,700 +3125,142 @@ async function cargarDeudaGlobal() {
   const totalEl = document.getElementById('deuda-global-total');
   if (!tbody) return;
 
-  // Fecha
   const hoy = new Date();
   const sub = document.getElementById('deuda-fecha-sub');
   if (sub) sub.textContent = hoy.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-  tbody.innerHTML = '<tr><td colspan="2"><div class="loading"><div class="spinner"></div>Calculando…</div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="3"><div class="loading"><div class="spinner"></div>Calculando…</div></td></tr>';
 
   try {
-    // Traer todas las liquidaciones y todos los pagos
     const [liquidaciones, pagos] = await Promise.all([
-      sbFetch('t_liquidacion_mensual', { select: 'id_profesional,monto_total', limit: 5000 }),
-      sbFetch('pagos', { select: 'id_profesional,monto', limit: 5000 })
+      sbFetch('t_liquidacion_mensual', { select: 'id_profesional,mes_liquidado,monto_total', limit: 5000 }),
+      sbFetch('pagos', { select: 'id_profesional,monto,mes_abonado', limit: 5000 })
     ]);
 
-    // Sumar lo que deben por profesional
-    const debePorProf = {};
-    liquidaciones.forEach(l => {
-      const id = l.id_profesional;
-      debePorProf[id] = (debePorProf[id] || 0) + (parseFloat(l.monto_total) || 0);
-    });
-
-    // Sumar lo que pagaron por profesional
-    const pagoPorProf = {};
+    // Pagos por prof+mes
+    const pagosPorProfMes = {};
     pagos.forEach(p => {
       const id = p.id_profesional;
-      pagoPorProf[id] = (pagoPorProf[id] || 0) + (parseFloat(p.monto) || 0);
+      const mes = normMes(p.mes_abonado);
+      const key = id + '_' + mes;
+      pagosPorProfMes[key] = (pagosPorProfMes[key] || 0) + (parseFloat(p.monto) || 0);
     });
 
-    // Construir mapa de nombre
+    // Deuda detallada por prof: [{id, nombre, meses: [{mes, debe, pago, saldo}]}]
     const profMap = {};
     profesionales.forEach(p => profMap[p.ID_Profesional] = p.Nombre_Medico);
 
-    // Todos los IDs que aparecen
-    const ids = [...new Set([
-      ...Object.keys(debePorProf),
-      ...Object.keys(pagoPorProf)
-    ])].map(Number).sort((a,b) => {
-      const na = profMap[a] || '';
-      const nb = profMap[b] || '';
-      return na.localeCompare(nb);
+    // Agrupar liquidaciones por profesional
+    const liqPorProf = {};
+    liquidaciones.forEach(l => {
+      const id = l.id_profesional;
+      if (!liqPorProf[id]) liqPorProf[id] = [];
+      const mesKey = normMes(l.mes_liquidado);
+      const debe = parseFloat(l.monto_total) || 0;
+      const pago = pagosPorProfMes[id + '_' + mesKey] || 0;
+      const saldo = debe - pago;
+      liqPorProf[id].push({
+        mes_label: l.mes_liquidado,
+        mesKey,
+        debe, pago, saldo
+      });
     });
 
+    // Ordenar por nombre
+    const ids = Object.keys(liqPorProf).map(Number).sort((a,b) =>
+      (profMap[a]||'').localeCompare(profMap[b]||'')
+    );
+
     if (!ids.length) {
-      tbody.innerHTML = '<tr><td colspan="2" style="padding:1.5rem;text-align:center;color:var(--text-dim)">Sin datos</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" style="padding:1.5rem;text-align:center;color:var(--text-dim)">Sin datos de liquidación</td></tr>';
       totalEl.textContent = '—';
       return;
     }
 
     let totalDeuda = 0;
-    tbody.innerHTML = ids.map(id => {
-      const debe = debePorProf[id] || 0;
-      const pago = pagoPorProf[id] || 0;
-      const saldo = debe - pago;
-      totalDeuda += saldo;
+    let html = '';
+    ids.forEach(id => {
       const nombre = profMap[id] || 'ID ' + id;
-      const saldoTxt = saldo > 0
-        ? `<span style="color:var(--red);font-family:'DM Mono',monospace;font-weight:600">$${fmt(saldo)}</span>`
-        : `<span style="color:var(--green);font-family:'DM Mono',monospace">$0</span>`;
-      return `<tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:0.65rem 1rem;font-weight:500">${nombre}</td>
-        <td style="padding:0.65rem 1rem;text-align:right">${saldoTxt}</td>
-      </tr>`;
-    }).join('');
+      const meses = liqPorProf[id];
+      const saldoProf = meses.reduce((s,m) => s + m.saldo, 0);
+      totalDeuda += saldoProf;
+      const tieneDuda = saldoProf > 0;
 
+      // Fila del profesional
+      html += `<tr style="border-bottom:1px solid var(--border);background:${tieneDuda ? 'rgba(201,85,74,0.03)' : ''}">
+        <td style="padding:0.6rem 0.75rem;vertical-align:top">
+          <div style="font-weight:600;font-size:0.85rem">${nombre}</div>
+          <div style="margin-top:0.3rem">`;
+
+      // Meses con deuda
+      meses.forEach(m => {
+        if (m.saldo > 0) {
+          html += `<div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:0.2rem 0;font-size:0.75rem">
+            <span style="color:var(--text-muted)">${m.mes_label}</span>
+            <span onclick="irAPagarDesdeDeuda(${id}, '${m.mesKey}')"
+              style="font-family:'DM Mono',monospace;color:var(--red);font-weight:700;
+                     cursor:pointer;text-decoration:underline;text-underline-offset:2px"
+              title="Click para pagar">
+              -$${fmt(m.saldo)}
+            </span>
+          </div>`;
+        } else {
+          html += `<div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:0.2rem 0;font-size:0.75rem">
+            <span style="color:var(--text-dim)">${m.mes_label}</span>
+            <span style="color:var(--green);font-size:0.7rem;font-weight:600">✓ pagado</span>
+          </div>`;
+        }
+      });
+
+      html += `</div></td>
+        <td style="padding:0.6rem 0.75rem;text-align:right;vertical-align:top;white-space:nowrap">
+          ${tieneDuda
+            ? `<span style="font-family:'DM Mono',monospace;font-size:1rem;font-weight:700;color:var(--red);
+                cursor:pointer" onclick="irAPagarDesdeDeuda(${id})" title="Click para pagar">
+                $${fmt(saldoProf)}</span>`
+            : `<span style="color:var(--green);font-weight:600;font-size:0.85rem">Al día ✓</span>`}
+        </td>
+      </tr>`;
+    });
+
+    tbody.innerHTML = html;
     totalEl.textContent = '$' + fmt(totalDeuda);
     totalEl.style.color = totalDeuda > 0 ? 'var(--red)' : 'var(--green)';
 
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="2" style="padding:1rem;text-align:center;color:var(--red)">Error cargando datos</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--red)">Error cargando datos</td></tr>';
     console.error('[LUMA] deuda global:', e);
   }
 }
 
-// ── RECIBO ──
-let reciboTexto = '';
-let reciboTelefono = '';
+// Navegar a Pagos con profesional y mes preseleccionado
+function irAPagarDesdeDeuda(idProf, mesKey) {
+  // Activar pestaña Pagos
+  const btnPagos = document.querySelector('.nav-btn:nth-child(4)');
+  if (btnPagos) showView('pagos', btnPagos);
 
-function mostrarRecibo({ nombre, telefono, monto, mes, concepto, fecha }) {
-  reciboTelefono = (telefono || '').replace(/\D/g,'');
-
-  const fechaFmt = fecha ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', {
-    day:'2-digit', month:'2-digit', year:'numeric'
-  }) : '—';
-
-  const nroRecibo = Date.now().toString().slice(-6);
-
-  reciboTexto =
-`━━━━━━━━━━━━━━━━━━━━━━━
-       LUMA · Medicina Funcional
-━━━━━━━━━━━━━━━━━━━━━━━
-RECIBO N° ${nroRecibo}
-Fecha: ${fechaFmt}
-━━━━━━━━━━━━━━━━━━━━━━━
-Profesional: ${nombre}
-Mes abonado: ${mes ? mes.charAt(0).toUpperCase()+mes.slice(1) : '—'}
-${concepto ? 'Concepto: ' + concepto : ''}
-━━━━━━━━━━━━━━━━━━━━━━━
-MONTO: $${fmt(monto)}
-━━━━━━━━━━━━━━━━━━━━━━━
-Gracias por su pago.`;
-
-  document.getElementById('recibo-contenido').innerHTML = `
-    <div style="text-align:center;margin-bottom:1rem">
-      <div style="font-family:'DM Serif Display',serif;font-size:1.8rem;color:var(--gold);letter-spacing:-1px">LUMA</div>
-      <div style="font-size:0.65rem;letter-spacing:0.25em;color:var(--text-muted);text-transform:uppercase">Medicina Funcional</div>
-    </div>
-    <div style="background:var(--bg);border-radius:10px;padding:1rem;font-family:'DM Mono',monospace;font-size:0.78rem;line-height:1.8;color:var(--text)">
-      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.5rem">
-        <span style="color:var(--text-muted)">Recibo N°</span><span>${nroRecibo}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.5rem">
-        <span style="color:var(--text-muted)">Fecha</span><span>${fechaFmt}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.5rem">
-        <span style="color:var(--text-muted)">Profesional</span><span style="text-align:right;max-width:55%">${nombre}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.5rem">
-        <span style="color:var(--text-muted)">Mes abonado</span><span>${mes ? mes.charAt(0).toUpperCase()+mes.slice(1) : '—'}</span>
-      </div>
-      ${concepto ? `<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.5rem">
-        <span style="color:var(--text-muted)">Concepto</span><span>${concepto}</span>
-      </div>` : ''}
-      <div style="display:flex;justify-content:space-between;margin-top:0.5rem;padding-top:0.5rem;border-top:2px solid var(--gold)">
-        <span style="font-weight:700;font-size:0.9rem">MONTO</span>
-        <span style="font-weight:700;font-size:1rem;color:var(--green)">$${fmt(monto)}</span>
-      </div>
-    </div>`;
-
-  // Generar link WA como <a> estático (funciona desde file://)
-  const tel = reciboTelefono ? '54' + reciboTelefono : '';
-  const waUrl = `https://wa.me/${tel}?text=${encodeURIComponent(reciboTexto)}`;
-  const waSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
-  const waWrap = document.getElementById('wa-link-wrap');
-  if (waWrap) {
-    waWrap.innerHTML = `<a href="${waUrl}" target="_blank" rel="noopener"
-      style="display:flex;align-items:center;justify-content:center;gap:0.5rem;
-             background:#25D366;color:white;border-radius:8px;padding:0.75rem;
-             font-weight:600;font-size:0.9rem;text-decoration:none;width:100%">
-      ${waSvg} Enviar por WhatsApp
-    </a>`;
-  }
-
-  document.getElementById('recibo-overlay').classList.remove('hidden');
-}
-
-function cerrarRecibo(e) {
-  if (!e || e.target === document.getElementById('recibo-overlay')) {
-    document.getElementById('recibo-overlay').classList.add('hidden');
-  }
-}
-
-async function copiarRecibo() {
-  try {
-    await navigator.clipboard.writeText(reciboTexto);
-    showToast('Recibo copiado ✓', 'success');
-  } catch(e) {
-    // fallback
-    const ta = document.createElement('textarea');
-    ta.value = reciboTexto;
-    document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('Recibo copiado ✓', 'success');
-  }
-}
-
-function enviarWhatsapp() {
-  // No usado — el link se genera en mostrarRecibo directamente
-}
-
-
-// ── CIERRE MENSUAL ──
-let cierreDatos = [];
-
-function iniciarCierre() {
-  const hoy = new Date();
-  const meses = ['enero','febrero','marzo','abril','mayo','junio',
-                  'julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const mesEl = document.getElementById('cierre-mes');
-  if (mesEl) mesEl.value = meses[hoy.getMonth()];
-  const anioEl = document.getElementById('cierre-anio');
-  if (anioEl) anioEl.value = hoy.getFullYear();
-  const editMes = document.getElementById('edit-cierre-mes');
-  if (editMes) editMes.value = meses[hoy.getMonth()];
-  const editAnio = document.getElementById('edit-cierre-anio');
-  if (editAnio) editAnio.value = hoy.getFullYear();
-  const prev = document.getElementById('cierre-preview');
-  if (prev) prev.style.display = 'none';
-  cierreDatos = [];
-}
-
-// ── Cargar facturación existente para editar ──
-async function cargarFacturacionExistente() {
-  const mes  = document.getElementById('edit-cierre-mes')?.value || '';
-  const anio = document.getElementById('edit-cierre-anio')?.value || '';
-  await cargarFacturacionMes(mes, anio);
-}
-
-async function cargarFacturacionMes(mes, anio) {
-  if (!mes) {
-    mes  = document.getElementById('edit-cierre-mes')?.value || '';
-    anio = document.getElementById('edit-cierre-anio')?.value || '';
-  }
-  const listaEl = document.getElementById('edit-cierre-lista');
-  if (!listaEl) return;
-  listaEl.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando…</div>';
-
-  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
-
-  try {
-    // Traer liquidaciones y pagos del mes simultáneamente
-    const [registros, pagosDelMes] = await Promise.all([
-      sbFetch('t_liquidacion_mensual', {
-        select: 'id_liquidacion,id_profesional,mes_liquidado,monto_total,fecha_cierre',
-        filters: [`mes_liquidado=eq.${mesLabel}`],
-        order: 'id_profesional.asc',
-        limit: 100
-      }),
-      sbFetch('pagos', {
-        select: 'id_profesional,monto,mes_abonado',
-        limit: 1000
-      })
-    ]);
-
-    // Sumar pagos por profesional para este mes
-    const pagadoPorProf = {};
-    const mesNorm = mes.toLowerCase();
-    pagosDelMes.forEach(p => {
-      const k = (p.mes_abonado||'').toLowerCase().split(' ')[0];
-      if (k === mesNorm) {
-        pagadoPorProf[p.id_profesional] = (pagadoPorProf[p.id_profesional]||0) + (parseFloat(p.monto)||0);
-      }
-    });
-
-    if (!registros.length) {
-      listaEl.innerHTML = `<div class="empty" style="padding:2rem">
-        <div class="empty-icon">⊟</div>
-        No hay facturación para ${mesLabel}.<br>
-        <small style="color:var(--text-dim)">Generala desde "Nuevo cierre".</small>
-      </div>`;
-      return;
-    }
-
-    const profMap = {};
-    profesionales.forEach(p => profMap[p.ID_Profesional] = p.Nombre_Medico);
-
-    let total = 0;
-    const ids = registros.map(r => r.id_liquidacion);
-
-    listaEl.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
-        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)">
-          ${mesLabel} · ${registros.length} profesionales
-        </div>
-        <button onclick="borrarTodasFacturaciones([${ids.join(',')}], '${mesLabel}')"
-          style="background:rgba(201,85,74,0.12);border:1px solid rgba(201,85,74,0.3);border-radius:6px;
-                 padding:0.35rem 0.75rem;cursor:pointer;font-size:0.75rem;color:var(--red);font-weight:600">
-          🗑 Borrar todo el mes
-        </button>
-      </div>
-      ${registros.map(r => {
-        total += parseFloat(r.monto_total)||0;
-        const nombre = profMap[r.id_profesional] || 'ID '+r.id_profesional;
-        const pagado = pagadoPorProf[r.id_profesional] || 0;
-        const tienePago = pagado > 0;
-        return `<div class="card" style="margin-bottom:0.5rem" id="edit-reg-${r.id_liquidacion}">
-          <div class="card-row" style="align-items:center">
-            <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nombre}</div>
-              <div class="card-sub" style="display:flex;gap:0.5rem;align-items:center">
-                ${r.fecha_cierre ? fmtFecha(r.fecha_cierre) : '—'}
-                ${tienePago ? `<span style="background:rgba(90,158,122,0.15);color:var(--green);
-                  border-radius:4px;padding:0.1rem 0.4rem;font-size:0.65rem;font-weight:600">
-                  Pagó $${fmt(pagado)}</span>` : ''}
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0">
-              <input type="number" value="${r.monto_total}" min="0" step="1000"
-                id="edit-monto-${r.id_liquidacion}"
-                data-pagado="${pagado}"
-                 style="width:105px;background:${tienePago ? 'rgba(90,158,122,0.08)' : 'var(--bg)'};border:1px solid ${tienePago ? 'rgba(90,158,122,0.3)' : 'var(--border)'};border-radius:6px;padding:0.35rem 0.4rem;color:var(--text);font-size:0.82rem;text-align:right;outline:none"
-
-                onfocus="this.style.borderColor='var(--gold)'"
-                onblur="this.style.borderColor='var(--border)'">
-              <button onclick="guardarEdicionFacturacion(${r.id_liquidacion})"
-                style="background:var(--gold);color:var(--surface);border:none;border-radius:6px;
-                       padding:0.35rem 0.55rem;cursor:pointer;font-size:0.78rem;font-weight:600">✓</button>
-              <button onclick="borrarFacturacion(${r.id_liquidacion}, '${nombre}', '${mesLabel}', ${pagado})"
-                style="background:rgba(201,85,74,0.1);border:1px solid rgba(201,85,74,0.3);
-                       border-radius:6px;padding:0.35rem 0.45rem;cursor:pointer;font-size:0.75rem;color:var(--red)">✕</button>
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
-      <div style="text-align:right;font-family:'DM Mono',monospace;font-weight:700;font-size:1rem;
-                  color:var(--red);padding:0.75rem 0;border-top:2px solid var(--border);margin-top:0.25rem">
-        Total: $${fmt(total)}
-      </div>`;
-  } catch(e) {
-    listaEl.innerHTML = `<div class="empty" style="padding:1rem;color:var(--red)">Error: ${e.message}</div>`;
-  }
-}
-
-async function guardarEdicionFacturacion(idLiq) {
-  const input = document.getElementById(`edit-monto-${idLiq}`);
-  const monto = parseFloat(input?.value) || 0;
-  const pagado = parseFloat(input?.dataset.pagado) || 0;
-
-  // Validar que el nuevo monto no sea menor a lo ya pagado
-  if (pagado > 0 && monto < pagado) {
-    // Mostrar cartel explicativo
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.zIndex = '700';
-    overlay.innerHTML = `
-      <div class="modal-sheet" style="max-width:380px" onclick="event.stopPropagation()">
-        <div class="modal-handle"></div>
-        <div style="text-align:center;margin-bottom:1rem">
-          <div style="font-size:1.8rem;margin-bottom:0.5rem">⚠️</div>
-          <div class="modal-title" style="font-size:1.1rem">No se puede reducir</div>
-        </div>
-        <div style="background:rgba(201,85,74,0.08);border:1px solid rgba(201,85,74,0.25);
-                    border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;
-                    color:var(--text);line-height:1.6">
-          El profesional ya tiene un pago registrado de 
-          <strong style="color:var(--green)">$${fmt(pagado)}</strong> para este mes.<br><br>
-          No podés establecer una liquidación de 
-          <strong style="color:var(--red)">$${fmt(monto)}</strong> porque sería menor al pago ya registrado.<br><br>
-          <span style="color:var(--text-muted)">Para corregir el monto, primero borrá el pago desde la pestaña <strong>Pagos</strong> y luego editá la liquidación.</span>
-        </div>
-        <button onclick="this.closest('.modal-overlay').remove()"
-          class="btn-submit">Entendido</button>
-      </div>`;
-    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
-    document.body.appendChild(overlay);
-    // Restaurar valor original
-    input.value = parseFloat(input.defaultValue) || pagado;
-    return;
-  }
-
-  try {
-    await sbFetch('t_liquidacion_mensual', {
-      method: 'PATCH',
-      filters: [`id_liquidacion=eq.${idLiq}`],
-      body: { monto_total: monto }
-    });
-    showToast('Monto actualizado ✓', 'success');
-    await cargarDeudaGlobal();
-  } catch(e) { showToast('Error al guardar', 'error'); }
-}
-
-async function borrarTodasFacturaciones(ids, mesLabel) {
-  if (!confirm(`¿Eliminar TODA la facturación de ${mesLabel} (${ids.length} registros)?\nEsta acción no se puede deshacer.`)) return;
-  let ok = 0;
-  for (const id of ids) {
-    try {
-      await sbFetch('t_liquidacion_mensual', { method: 'DELETE', filters: [`id_liquidacion=eq.${id}`] });
-      document.getElementById(`edit-reg-${id}`)?.remove();
-      ok++;
-    } catch(e) { console.error('Error borrando', id, e); }
-  }
-  showToast(`${ok} registros eliminados ✓`, 'success');
-  await cargarDeudaGlobal();
-  // Recargar la lista
-  await cargarFacturacionMes();
-}
-
-async function borrarFacturacion(idLiq, nombre, mesLabel, pagado = 0) {
-  if (pagado > 0) {
-    // Tiene pago — mostrar cartel bloqueante
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.zIndex = '700';
-    overlay.innerHTML = `
-      <div class="modal-sheet" style="max-width:380px" onclick="event.stopPropagation()">
-        <div class="modal-handle"></div>
-        <div style="text-align:center;margin-bottom:1rem">
-          <div style="font-size:1.8rem;margin-bottom:0.5rem">🔒</div>
-          <div class="modal-title" style="font-size:1.1rem">No se puede eliminar</div>
-        </div>
-        <div style="background:rgba(201,85,74,0.08);border:1px solid rgba(201,85,74,0.25);
-                    border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;
-                    color:var(--text);line-height:1.6">
-          <strong>${nombre}</strong> ya tiene un pago de 
-          <strong style="color:var(--green)">$${fmt(pagado)}</strong> en ${mesLabel}.<br><br>
-          <span style="color:var(--text-muted)">Primero borrá el pago desde la pestaña <strong>Pagos</strong> y después podrás eliminar esta liquidación.</span>
-        </div>
-        <button onclick="this.closest('.modal-overlay').remove()" class="btn-submit">Entendido</button>
-      </div>`;
-    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
-    document.body.appendChild(overlay);
-    return;
-  }
-  if (!confirm(`¿Eliminar la liquidación de ${nombre} para ${mesLabel}?`)) return;
-  try {
-    await sbFetch('t_liquidacion_mensual', {
-      method: 'DELETE',
-      filters: [`id_liquidacion=eq.${idLiq}`]
-    });
-    showToast('Eliminado ✓', 'success');
-    document.getElementById(`edit-reg-${idLiq}`)?.remove();
-    await cargarDeudaGlobal();
-  } catch(e) { showToast('Error al eliminar', 'error'); }
-}
-
-// ── CIERRE MENSUAL ──
- // [{ id_profesional, nombre, turnos, monto }]
-
-function iniciarCierre() {
-  const hoy = new Date();
-  const meses = ['enero','febrero','marzo','abril','mayo','junio',
-                  'julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const mesEl = document.getElementById('cierre-mes');
-  if (mesEl) mesEl.value = meses[hoy.getMonth()];
-  const anioEl = document.getElementById('cierre-anio');
-  if (anioEl) anioEl.value = hoy.getFullYear();
-  const prev = document.getElementById('cierre-preview');
-  if (prev) prev.style.display = 'none';
-  cierreDatos = [];
-}
-
-async function generarVistaPrevia() {
-  const mes    = document.getElementById('cierre-mes').value;
-  const anio   = parseInt(document.getElementById('cierre-anio').value);
-  const hoy    = new Date();
-
-  // Validar que el mes no sea el actual ni futuro (debe estar terminado)
-  const mesesNombres = ['enero','febrero','marzo','abril','mayo','junio',
-                        'julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const mesIdx = mesesNombres.indexOf(mes.toLowerCase());
-  const fechaMes = new Date(anio, mesIdx, 1); // primer día del mes a cerrar
-  const primerDiaMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-
-  // Permitir cerrar solo meses que ya empezaron (incluyendo el actual para factura adelantada)
-  // Pero NO meses futuros (mes siguiente o posterior)
-  const mesSiguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
-  if (fechaMes >= mesSiguiente) {
-    showToast(`No podés facturar ${mes} ${anio} — es un mes futuro`, 'error');
-    return;
-  }
-
-  document.getElementById('cierre-preview-titulo').textContent =
-    mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
-  document.getElementById('cierre-preview').style.display = 'block';
-  document.getElementById('cierre-tabla-body').innerHTML =
-    '<tr><td colspan="3"><div class="loading"><div class="spinner"></div>Calculando…</div></td></tr>';
-
-  if (!profesionales.length) {
-    document.getElementById('cierre-tabla-body').innerHTML =
-      '<tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--text-dim)">No hay profesionales cargados. Andá al Tablero primero.</td></tr>';
-    return;
-  }
-
-  // Traer precios por consultorio desde tabla consultorios
-  let preciosPorConsul = {};
-  try {
-    const consultorios = await sbFetch('consultorios', {
-      select: 'nombreconsultorio,precio_modulo',
-      limit: 100
-    });
-    consultorios.forEach(c => {
-      const key = (c.nombreconsultorio || '').toLowerCase().trim().replace(/\s+/g,' ');
-      // Guardar el precio real (incluyendo $0)
-      const precio = parseFloat(c.precio_modulo);
-      preciosPorConsul[key] = isNaN(precio) ? 0 : precio;
-    });
-    console.log('[Cierre] precios normalizados:', preciosPorConsul);
-  } catch(e) {
-    console.warn('[Cierre] No se pudo cargar precios consultorios:', e.message);
-  }
-
-  console.log('[Cierre] Precios por consultorio:', preciosPorConsul);
-
-  // Calcular monto por profesional usando grillaDatos (en memoria)
-  // acum[id_profesional] = { turnos, monto, detalle: [{consul, turnos, monto}] }
-  const acum = {};
-
-  if (Object.keys(grillaDatos).length > 0) {
-    DIAS.forEach(dia => {
-      BLOQUES.forEach(b => {
-        CONSULTORIOS.forEach(consul => {
-          const asig = grillaDatos[dia]?.[b.key]?.[consul];
-          if (!asig) return;
-          const id = asig.id_profesional;
-          if (!id) return;
-
-          // Evitar contar el mismo horario dos veces (M1 y M2 del mismo registro)
-          const hkey = asig.ID_Horario || (dia + b.key + consul);
-          if (!acum[id]) acum[id] = { turnos: 0, monto: 0, vistos: new Set() };
-          if (acum[id].vistos.has(hkey)) return;
-          acum[id].vistos.add(hkey);
-
-          // Usar hora real del horario (no la del bloque)
-          // asig.hora_inicio y asig.hora_fin vienen de Supabase
-          const hi = (asig.hora_inicio || b.hi || '08:00').substring(0,5);
-          const hf = (asig.hora_fin   || b.hf || '12:00').substring(0,5);
-          const [hh,  mm]  = hi.split(':').map(Number);
-          const [hh2, mm2] = hf.split(':').map(Number);
-          const dur  = (hh2 + mm2/60) - (hh + mm/60);
-          const fraccion = dur >= 3.5 ? 1 : 0.5; // 4hs=1 módulo, 2hs=0.5
-
-          // Precio del consultorio — normalizar key
-          const consulKey = consul.toLowerCase().trim().replace(/\s+/g, ' ');
-          let precioBase = preciosPorConsul[consulKey];
-          if (precioBase === undefined) {
-            const consulKeyNoSp = consulKey.replace(' ','');
-            for (const [k,v] of Object.entries(preciosPorConsul)) {
-              if (k.replace(' ','') === consulKeyNoSp) { precioBase = v; break; }
-            }
+  // Seleccionar el profesional
+  const selProf = document.getElementById('pag-prof');
+  if (selProf) {
+    selProf.value = idProf;
+    onProfPagoChange().then(() => {
+      // Seleccionar el mes si se especificó
+      if (mesKey) {
+        const selMes = document.getElementById('pag-mes');
+        if (selMes) {
+          for (let opt of selMes.options) {
+            if (opt.value === mesKey) { opt.selected = true; break; }
           }
-          if (precioBase === undefined) precioBase = 150000;
-          // Aplicar descuento del profesional si tiene
-          const profObj = profesionales.find(p => p.ID_Profesional === id);
-          const descuento = parseFloat(profObj?.descuento_modulo) || 0;
-          const montoTurno = Math.max(0, precioBase * fraccion - descuento * fraccion);
-
-          acum[id].turnos++;
-          acum[id].monto += montoTurno;
-        });
-      });
-    });
-  } else {
-    // Fallback: fetch si grillaDatos vacío
-    try {
-      let rows = [];
-      try { rows = await sbFetch('horariosfijos', { select: 'ID_Profesional,nombreConsultorio,Hora_inicio,Hora_fin', limit: 2000 }); }
-      catch(_) {
-        rows = await sbFetch('horariosfijos', { select: 'id_profesional,nombreconsultorio,hora_inicio,hora_fin', limit: 2000 });
-        rows = rows.map(r => ({ ID_Profesional: r.id_profesional, nombreConsultorio: r.nombreconsultorio,
-                                Hora_inicio: r.hora_inicio, Hora_fin: r.hora_fin }));
-      }
-      rows.forEach(h => {
-        const id = h.ID_Profesional;
-        const hi = (h.Hora_inicio||'').substring(0,5);
-        const hf = (h.Hora_fin||'').substring(0,5);
-        const [hh,mm]   = hi.split(':').map(Number);
-        const [hh2,mm2] = hf.split(':').map(Number);
-        const dur      = (hh2+mm2/60)-(hh+mm/60);
-        const fraccion = dur >= 3.5 ? 1 : 0.5;
-        const consulKey = (h.nombreConsultorio||'').toLowerCase().trim().replace(/\s+/g,' ');
-        let precioBase = preciosPorConsul[consulKey];
-        if (precioBase === undefined) {
-          const cNoSp = consulKey.replace(' ','');
-          for (const [k,v] of Object.entries(preciosPorConsul)) {
-            if (k.replace(' ','') === cNoSp) { precioBase = v; break; }
-          }
+          onMesPagoChange();
         }
-        if (precioBase === undefined) precioBase = 150000;
-        if (!acum[id]) acum[id] = { turnos:0, monto:0, vistos: new Set() };
-        acum[id].turnos++;
-        acum[id].monto += precioBase * fraccion;
-      });
-    } catch(e) {
-      document.getElementById('cierre-tabla-body').innerHTML =
-        `<tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--red)">Error: ${e.message}</td></tr>`;
-      return;
-    }
-  }
-
-  cierreDatos = profesionales.map(p => {
-    const id  = p.ID_Profesional;
-    const dat = acum[id] || { turnos:0, monto:0 };
-    return {
-      id_profesional: id,
-      nombre: p.Nombre_Medico,
-      turnos: dat.turnos,
-      modulos: dat.turnos,
-      monto: Math.round(dat.monto),
-      mes_inicio: p.mes_inicio || null
-    };
-  }).filter(d => {
-    if (!d.turnos) return false;
-    // Excluir médicos cuyo inicio es posterior al mes a facturar
-    if (d.mes_inicio) {
-      const inicio = new Date(d.mes_inicio + 'T12:00:00');
-      const inicioMes = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
-      if (fechaMes < inicioMes) return false; // mes a facturar es anterior al inicio
-    }
-    return true;
-  });
-
-  if (!cierreDatos.length) {
-    document.getElementById('cierre-tabla-body').innerHTML =
-      '<tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--text-dim)">Sin horarios asignados. Verificá la Grilla primero.</td></tr>';
-    return;
-  }
-
-  _renderTablaCierre();
-}
-function _renderTablaCierre() {
-  const tbody = document.getElementById('cierre-tabla-body');
-  if (!cierreDatos.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="padding:1rem;text-align:center;color:var(--text-dim)">Sin horarios asignados</td></tr>';
-    document.getElementById('cierre-total').textContent = '$0';
-    return;
-  }
-
-  let total = 0;
-  tbody.innerHTML = cierreDatos.map((d, i) => {
-    total += d.monto;
-    return `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:0.55rem 0.75rem;font-weight:500">${d.nombre}</td>
-      <td style="padding:0.55rem 0.75rem;text-align:center;color:var(--text-muted);font-size:0.75rem">
-        ${d.turnos} turno${d.turnos!==1?'s':''} · ${d.modulos} mód.
-      </td>
-      <td style="padding:0.4rem 0.5rem;text-align:right">
-        <input type="number" value="${d.monto}" min="0" step="1000"
-          style="width:110px;background:var(--bg);border:1px solid var(--border);border-radius:6px;
-                 padding:0.35rem 0.5rem;color:var(--text);font-family:'DM Mono',monospace;
-                 font-size:0.82rem;text-align:right;outline:none"
-          oninput="cierreDatos[${i}].monto=parseFloat(this.value)||0; actualizarTotalCierre()"
-          onfocus="this.style.borderColor='var(--gold)'"
-          onblur="this.style.borderColor='var(--border)'">
-      </td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('cierre-total').textContent = '$' + fmt(total);
-}
-
-function recalcularCierre() {
-  const modulo = parseFloat(document.getElementById('cierre-modulo')?.value) || 150000;
-  cierreDatos.forEach(d => { d.monto = Math.round(d.modulos * modulo); });
-  _renderTablaCierre();
-}
-
-function actualizarTotalCierre() {
-  const total = cierreDatos.reduce((s, d) => s + (d.monto || 0), 0);
-  document.getElementById('cierre-total').textContent = '$' + fmt(total);
-}
-
-async function confirmarCierre() {
-  if (!cierreDatos.length) { showToast('Generá la vista previa primero', 'error'); return; }
-  const mes  = document.getElementById('cierre-mes').value;
-  const anio = document.getElementById('cierre-anio').value;
-  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
-
-  if (!confirm(`¿Confirmar cierre de ${mesLabel}? Se generará la deuda para ${cierreDatos.length} profesionales.`)) return;
-
-  let ok = 0, errores = 0;
-  for (const d of cierreDatos) {
-    try {
-      // Verificar si ya existe liquidación para este prof y mes
-      // Calcular mes_facturacion
-      const _mesesIdx = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-      const mesNum = String(_mesesIdx.indexOf(mes.toLowerCase()) + 1).padStart(2,'0');
-      const mesFac = `${anio}-${mesNum}-01`;
-
-      // Buscar si ya existe liquidación para este prof+mes
-      const existing = await sbFetch('t_liquidacion_mensual', {
-        select: 'id_liquidacion',
-        filters: [`id_profesional=eq.${d.id_profesional}`, `mes_liquidado=eq.${mesLabel}`],
-        limit: 1
-      });
-
-      if (existing.length > 0) {
-        // Actualizar existente
-        await sbFetch('t_liquidacion_mensual', {
-          method: 'PATCH',
-          filters: [`id_profesional=eq.${d.id_profesional}`, `mes_liquidado=eq.${mesLabel}`],
-          body: { monto_total: d.monto, mes_facturacion: mesFac }
-        });
-      } else {
-        // Insertar nuevo
-        await sbFetch('t_liquidacion_mensual', {
-          method: 'POST',
-          body: {
-            id_profesional: d.id_profesional,
-            mes_liquidado: mesLabel,
-            monto_total: d.monto,
-            mes_facturacion: mesFac,
-            fecha_cierre: new Date().toISOString().split('T')[0]
-          }
-        });
       }
-      ok++;
-    } catch(e) {
-      errores++;
-      console.error(`Error prof ${d.id_profesional}:`, e);
-    }
+      // Scroll al formulario
+      document.getElementById('pag-form-wrap')?.scrollIntoView({ behavior: 'smooth' });
+    });
   }
-
-  if (errores === 0) {
-    showToast(`Cierre ${mesLabel} generado ✓ (${ok} profesionales)`, 'success');
-  } else {
-    showToast(`${ok} OK, ${errores} errores. Revisá la consola.`, 'error');
-  }
-
-  // Actualizar deuda global
-  await cargarDeudaGlobal();
-  document.getElementById('cierre-preview').style.display = 'none';
-  cierreDatos = [];
 }
-
 
 // ── RESUMEN MÉDICO ──
 function cerrarResumen(e) {
@@ -3325,45 +3292,38 @@ async function verResumenMedico(id) {
       })
     ]);
 
-    // Calcular totales
     const totalDebe = liquidaciones.reduce((s,l) => s+(parseFloat(l.monto_total)||0), 0);
     const totalPago = pagos.reduce((s,p) => s+(parseFloat(p.monto)||0), 0);
     const saldo = totalDebe - totalPago;
 
-    // Turnos desde grillaDatos
-    let turnosCount = 0;
-    let consultorios = new Set();
-    DIAS.forEach(dia => {
-      BLOQUES.forEach(b => {
-        CONSULTORIOS.forEach(consul => {
-          const asig = grillaDatos[dia]?.[b.key]?.[consul];
-          if (asig?.id_profesional === id) {
-            const hkey = asig.ID_Horario || (dia+b.key+consul);
-            consultorios.add(consul);
-          }
-        });
-      });
-    });
-
-    // Contar turnos únicos
+    // Turnos desde grillaDatos — recopilar detalle por día
+    const turnosDetalle = []; // [{dia, consul, hi, hf}]
     const vistos = new Set();
-    DIAS.forEach(dia => {
+    const diasOrden = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+    diasOrden.forEach(dia => {
       BLOQUES.forEach(b => {
         CONSULTORIOS.forEach(consul => {
           const asig = grillaDatos[dia]?.[b.key]?.[consul];
           if (asig?.id_profesional === id) {
             const hkey = asig.ID_Horario || (dia+b.key+consul);
-            vistos.add(hkey);
+            if (!vistos.has(hkey)) {
+              vistos.add(hkey);
+              turnosDetalle.push({
+                dia,
+                consul: consul.replace(/consul\s*(\d+)/i, 'C$1'),
+                hi: (asig.hora_inicio||b.hi||'').substring(0,5),
+                hf: (asig.hora_fin||b.hf||'').substring(0,5)
+              });
+            }
           }
         });
       });
     });
-    turnosCount = vistos.size;
 
-    // Pagos por mes para cruzar con liquidaciones
+    // Pagos por mes
     const pagosxMes = {};
     pagos.forEach(p => {
-      const k = (p.mes_abonado||'').toLowerCase().split(' ')[0];
+      const k = normMes(p.mes_abonado);
       pagosxMes[k] = (pagosxMes[k]||0) + (parseFloat(p.monto)||0);
     });
 
@@ -3372,11 +3332,13 @@ async function verResumenMedico(id) {
         <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text)">${prof.Nombre_Medico}</div>
         ${prof.telefono ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem">📱 ${prof.telefono}</div>` : ''}
         ${prof.mes_inicio ? `<div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.1rem">Desde ${fmtFecha(prof.mes_inicio)}</div>` : ''}
+        ${prof.descuento_modulo > 0 ? `<div style="font-size:0.75rem;color:var(--red);margin-top:0.1rem">Descuento: -$${fmt(prof.descuento_modulo)} / módulo</div>` : ''}
       </div>
 
+      <!-- Métricas -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:1.25rem">
         <div style="background:var(--surface2);border-radius:8px;padding:0.75rem;text-align:center">
-          <div style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--text)">${turnosCount}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--text)">${turnosDetalle.length}</div>
           <div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.2rem">Turnos<br>semanales</div>
         </div>
         <div style="background:var(--surface2);border-radius:8px;padding:0.75rem;text-align:center">
@@ -3391,25 +3353,49 @@ async function verResumenMedico(id) {
         </div>
       </div>
 
+      <!-- Detalle de turnos -->
+      ${turnosDetalle.length ? `
+      <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem">Turnos asignados</div>
+      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:1.25rem;overflow:hidden">
+        ${turnosDetalle.map((t,i) => `
+          <div style="display:flex;align-items:center;padding:0.45rem 0.75rem;font-size:0.78rem;
+                      ${i < turnosDetalle.length-1 ? 'border-bottom:1px solid var(--border)' : ''}">
+            <span style="font-weight:600;min-width:75px;color:var(--text)">${t.dia}</span>
+            <span style="font-family:'DM Mono',monospace;color:var(--gold);min-width:80px">${t.hi}–${t.hf}</span>
+            <span style="color:var(--text-muted)">${t.consul}</span>
+          </div>`).join('')}
+      </div>` : '<div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:1rem">Sin turnos asignados</div>'}
+
+      <!-- Historial por mes -->
       ${liquidaciones.length ? `
       <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem">Historial por mes</div>
-      <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+      <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
         ${liquidaciones.map(l => {
-          const k = (l.mes_liquidado||'').toLowerCase().split(' ')[0];
-          const pago = pagosxMes[k]||0;
-          const dif  = (parseFloat(l.monto_total)||0) - pago;
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;border-bottom:1px solid var(--border)">
-            <div style="font-size:0.8rem;font-weight:500">${l.mes_liquidado}</div>
-            <div style="display:flex;gap:0.75rem;align-items:center;font-family:'DM Mono',monospace;font-size:0.75rem">
-              <span style="color:var(--text-muted)">$${fmt(l.monto_total)}</span>
-              <span style="color:var(--green)">$${fmt(pago)}</span>
-              <span style="color:${dif>0?'var(--red)':'var(--green)'}">
-                ${dif>0?'-$'+fmt(dif):'✓'}
-              </span>
+          const k = normMes(l.mes_liquidado);
+          const deuda = parseFloat(l.monto_total) || 0;
+          const pago  = pagosxMes[k] || 0;
+          const dif   = deuda - pago;
+          const pagado = dif <= 0;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;border-bottom:1px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:0.82rem;font-weight:600">${l.mes_liquidado}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem">
+              ${pagado
+                ? `<span style="background:rgba(90,158,122,0.15);color:var(--green);
+                     border-radius:5px;padding:0.15rem 0.5rem;font-size:0.72rem;font-weight:700">
+                     PAGADO</span>
+                   <span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--green);font-weight:600">
+                     $${fmt(pago)}</span>`
+                : `<span style="background:rgba(201,85,74,0.12);color:var(--red);
+                     border-radius:5px;padding:0.15rem 0.5rem;font-size:0.72rem;font-weight:700">
+                     DEBE</span>
+                   <span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--red);font-weight:600">
+                     $${fmt(dif)}</span>`}
             </div>
           </div>`;
         }).join('')}
-      </div>` : '<div class="empty" style="padding:1rem">Sin liquidaciones registradas</div>'}
+      </div>` : '<div style="font-size:0.8rem;color:var(--text-dim)">Sin liquidaciones registradas</div>'}
     `;
   } catch(e) {
     contenido.innerHTML = `<div class="empty" style="color:var(--red)">Error: ${e.message}</div>`;
@@ -3437,42 +3423,131 @@ async function cargarConsultorios() {
       return;
     }
 
+    // Construir mapa de ocupación por consultorio desde grillaDatos
+    const ocupacion = {}; // { 'consul 1': [{dia, hi, hf, medico}] }
+    const diasSemana = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+    const turnosBase = [
+      { label: 'Mañana', hi: '08:00', hf: '12:00' },
+      { label: 'Tarde', hi: '14:00', hf: '18:00' }
+    ];
+
+    CONSULTORIOS.forEach(consul => {
+      ocupacion[consul] = [];
+      const vistos = new Set();
+      diasSemana.forEach(dia => {
+        BLOQUES.forEach(b => {
+          const asig = grillaDatos[dia]?.[b.key]?.[consul];
+          if (asig) {
+            const hkey = asig.ID_Horario || (dia + b.key + consul);
+            if (!vistos.has(hkey)) {
+              vistos.add(hkey);
+              ocupacion[consul].push({
+                dia,
+                hi: (asig.hora_inicio || b.hi || '').substring(0, 5),
+                hf: (asig.hora_fin || b.hf || '').substring(0, 5),
+                medico: asig.nombre_medico || '?'
+              });
+            }
+          }
+        });
+      });
+    });
+
     listaEl.innerHTML = consultoriosData.map(c => {
       const precio = parseFloat(c.precio_modulo) || 0;
-      const histor = parseFloat(c.precio_historico_congelado) || 0;
+      const consulKey = (c.nombreconsultorio || '').toLowerCase();
+      const turnos = ocupacion[consulKey] || [];
+      const totalSlots = diasSemana.length * 2; // 2 turnos por día
+      const ocupados = turnos.length;
+      const libres = totalSlots - ocupados;
+      const pctOcup = totalSlots > 0 ? Math.round((ocupados / totalSlots) * 100) : 0;
+
+      // Detalle por día
+      const detalleHTML = diasSemana.map(dia => {
+        const turnosDia = turnos.filter(t => t.dia === dia);
+        if (!turnosDia.length) return '';
+        return turnosDia.map(t =>
+          `<div style="display:flex;align-items:center;gap:0.4rem;padding:0.25rem 0;font-size:0.72rem">
+            <span style="font-weight:600;min-width:58px;color:var(--text)">${dia.substring(0,3)}</span>
+            <span style="font-family:'DM Mono',monospace;color:var(--gold);min-width:70px">${t.hi}–${t.hf}</span>
+            <span style="color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.medico}</span>
+          </div>`
+        ).join('');
+      }).join('');
+
+      // Días libres
+      const diasConTurno = new Set(turnos.map(t => t.dia));
+      const diasLibresArr = diasSemana.filter(d => {
+        const ocupM = turnos.some(t => t.dia === d && parseInt(t.hi) < 13);
+        const ocupT = turnos.some(t => t.dia === d && parseInt(t.hi) >= 13);
+        return !ocupM || !ocupT;
+      });
+
+      // Slots libres detalle
+      let libresHTML = '';
+      diasSemana.forEach(dia => {
+        const turnosDia = turnos.filter(t => t.dia === dia);
+        const tieneM = turnosDia.some(t => parseInt(t.hi) < 13);
+        const tieneT = turnosDia.some(t => parseInt(t.hi) >= 13);
+        const slots = [];
+        if (!tieneM) slots.push('8–12');
+        if (!tieneT) slots.push('14–18');
+        if (slots.length) {
+          libresHTML += `<span style="display:inline-block;background:rgba(90,158,122,0.12);
+            color:var(--green);border-radius:4px;padding:0.1rem 0.4rem;font-size:0.65rem;
+            margin:0.15rem 0.15rem 0 0">${dia.substring(0,3)} ${slots.join(' ')}</span>`;
+        }
+      });
+
       return `
       <div class="card" style="margin-bottom:0.75rem" id="consul-card-${c.id_consultorio}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
-          <div>
-            <div style="font-weight:700;font-size:1rem;text-transform:capitalize">${c.nombreconsultorio}</div>
-            ${histor > 0 && histor !== precio ? `<div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.1rem">Precio anterior: $${fmt(histor)}</div>` : ''}
-          </div>
-          <div style="font-family:'DM Mono',monospace;font-size:1.2rem;font-weight:700;
+        <!-- Header: nombre + precio -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+          <div style="font-weight:700;font-size:1rem;text-transform:capitalize">${c.nombreconsultorio}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;
                       color:${precio > 0 ? 'var(--text)' : 'var(--text-dim)'}">
-            ${precio > 0 ? '$'+fmt(precio) : 'Sin costo'}
+            ${precio > 0 ? '$'+fmt(precio) : '$0'}
           </div>
         </div>
-        <div style="display:flex;gap:0.5rem;align-items:center">
+
+        <!-- Precio editable + barra de ocupación -->
+        <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.75rem">
+          <div style="min-width:140px">
+            <label style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:0.2rem">Precio módulo</label>
+            <div style="display:flex;gap:0.3rem">
+              <input type="number" id="consul-precio-${c.id_consultorio}"
+                value="${precio}" min="0" step="1000"
+                class="form-input" style="margin:0;padding:0.4rem 0.5rem;width:90px;font-size:0.82rem">
+              <button onclick="guardarPrecioConsultorio(${c.id_consultorio})"
+                style="background:var(--gold);color:var(--surface);border:none;border-radius:6px;
+                       padding:0.4rem 0.6rem;cursor:pointer;font-weight:600;font-size:0.75rem;
+                       flex-shrink:0">✓</button>
+            </div>
+          </div>
           <div style="flex:1">
-            <label style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;
-                          color:var(--text-muted);font-weight:600;display:block;margin-bottom:0.3rem">
-              Nuevo precio módulo 4hs ($)
-            </label>
-            <input type="number" id="consul-precio-${c.id_consultorio}"
-              value="${precio}" min="0" step="1000"
-              class="form-input" style="margin:0"
-              placeholder="0 = sin costo">
+            <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-muted);margin-bottom:0.3rem">
+              <span>Ocupación semanal</span>
+              <span>${pctOcup}% · ${ocupados} de ${totalSlots} turnos</span>
+            </div>
+            <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+              <div style="background:${pctOcup > 70 ? 'var(--red)' : pctOcup > 40 ? 'var(--gold)' : 'var(--green)'};
+                          height:100%;width:${pctOcup}%;border-radius:4px;transition:width 0.3s"></div>
+            </div>
           </div>
-          <button onclick="guardarPrecioConsultorio(${c.id_consultorio})"
-            style="background:var(--gold);color:var(--surface);border:none;border-radius:8px;
-                   padding:0.75rem 1rem;cursor:pointer;font-weight:600;font-size:0.85rem;
-                   margin-top:1.3rem;flex-shrink:0;white-space:nowrap">
-            Actualizar
-          </button>
         </div>
-        <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.4rem">
-          Medio turno (2hs) = $${fmt(precio/2)} · Solo aplica a cierres futuros
-        </div>
+
+        <!-- Ocupados -->
+        ${detalleHTML ? `
+        <div style="font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.3rem">Ocupados</div>
+        <div style="border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;margin-bottom:0.5rem">
+          ${detalleHTML}
+        </div>` : ''}
+
+        <!-- Libres -->
+        ${libresHTML ? `
+        <div style="font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.3rem">Disponibles</div>
+        <div style="display:flex;flex-wrap:wrap">${libresHTML}</div>
+        ` : '<div style="font-size:0.72rem;color:var(--red);font-weight:600">Consultorio completo</div>'}
       </div>`;
     }).join('');
 
@@ -3520,6 +3595,416 @@ async function guardarPrecioConsultorio(id) {
     showToast('Error al actualizar: ' + e.message, 'error');
     console.error(e);
   }
+}
+
+// ── CIERRE MENSUAL ──
+let cierreDatos = [];
+
+function iniciarCierre() {
+  const hoy = new Date();
+  const meses = ['enero','febrero','marzo','abril','mayo','junio',
+                  'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const mesEl = document.getElementById('cierre-mes');
+  if (mesEl) mesEl.value = meses[hoy.getMonth()];
+  const anioEl = document.getElementById('cierre-anio');
+  if (anioEl) anioEl.value = hoy.getFullYear();
+  const editMes = document.getElementById('edit-cierre-mes');
+  if (editMes) editMes.value = meses[hoy.getMonth()];
+  const editAnio = document.getElementById('edit-cierre-anio');
+  if (editAnio) editAnio.value = hoy.getFullYear();
+  const prev = document.getElementById('cierre-preview');
+  if (prev) prev.style.display = 'none';
+  cierreDatos = [];
+}
+
+async function generarVistaPrevia() {
+  const mes    = document.getElementById('cierre-mes').value;
+  const anio   = parseInt(document.getElementById('cierre-anio').value);
+  const hoy    = new Date();
+
+  const mesesNombres = ['enero','febrero','marzo','abril','mayo','junio',
+                        'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const mesIdx = mesesNombres.indexOf(mes.toLowerCase());
+  const fechaMes = new Date(anio, mesIdx, 1);
+  const mesSiguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+  if (fechaMes >= mesSiguiente) {
+    showToast(`No podés facturar ${mes} ${anio} — es un mes futuro`, 'error');
+    return;
+  }
+
+  document.getElementById('cierre-preview-titulo').textContent =
+    mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
+  document.getElementById('cierre-preview').style.display = 'block';
+  document.getElementById('cierre-tabla-body').innerHTML =
+    '<tr><td colspan="2"><div class="loading"><div class="spinner"></div>Calculando…</div></td></tr>';
+
+  if (!profesionales.length) {
+    document.getElementById('cierre-tabla-body').innerHTML =
+      '<tr><td colspan="2" style="padding:1rem;text-align:center;color:var(--text-dim)">No hay profesionales cargados.</td></tr>';
+    return;
+  }
+
+  // Traer precios de consultorios
+  let preciosPorConsul = {};
+  try {
+    const consultorios = await sbFetch('consultorios', {
+      select: 'nombreconsultorio,precio_modulo', limit: 100
+    });
+    consultorios.forEach(c => {
+      const key = (c.nombreconsultorio || '').toLowerCase().trim().replace(/\s+/g,' ');
+      const precio = parseFloat(c.precio_modulo);
+      preciosPorConsul[key] = isNaN(precio) ? 0 : precio;
+    });
+  } catch(e) { console.warn('[Cierre] No se pudo cargar precios:', e); }
+
+  // Calcular por profesional usando grillaDatos
+  const acum = {};
+
+  if (Object.keys(grillaDatos).length > 0) {
+    DIAS.forEach(dia => {
+      BLOQUES.forEach(b => {
+        CONSULTORIOS.forEach(consul => {
+          const asig = grillaDatos[dia]?.[b.key]?.[consul];
+          if (!asig) return;
+          const id = asig.id_profesional;
+          if (!id) return;
+          const hkey = asig.ID_Horario || (dia + b.key + consul);
+          if (!acum[id]) acum[id] = { turnos: 0, monto: 0, vistos: new Set() };
+          if (acum[id].vistos.has(hkey)) return;
+          acum[id].vistos.add(hkey);
+
+          const hi = (asig.hora_inicio || b.hi || '08:00').substring(0,5);
+          const hf = (asig.hora_fin || b.hf || '12:00').substring(0,5);
+          const [hh,mm] = hi.split(':').map(Number);
+          const [hh2,mm2] = hf.split(':').map(Number);
+          const dur = (hh2+mm2/60)-(hh+mm/60);
+          const fraccion = dur / 4;
+
+          const consulKey = consul.toLowerCase().trim().replace(/\s+/g, ' ');
+          let precioBase = preciosPorConsul[consulKey];
+          if (precioBase === undefined) {
+            const cNoSp = consulKey.replace(' ','');
+            for (const [k,v] of Object.entries(preciosPorConsul)) {
+              if (k.replace(' ','') === cNoSp) { precioBase = v; break; }
+            }
+          }
+          if (precioBase === undefined) precioBase = 150000;
+          const profObj = profesionales.find(p => p.ID_Profesional === id);
+          const descuento = parseFloat(profObj?.descuento_modulo) || 0;
+          const montoTurno = Math.max(0, precioBase * fraccion - descuento * fraccion);
+          acum[id].turnos++;
+          acum[id].monto += montoTurno;
+        });
+      });
+    });
+  }
+
+  cierreDatos = profesionales.map(p => {
+    const id = p.ID_Profesional;
+    const dat = acum[id] || { turnos:0, monto:0 };
+    return {
+      id_profesional: id, nombre: p.Nombre_Medico,
+      turnos: dat.turnos, modulos: dat.turnos,
+      monto: Math.round(dat.monto), mes_inicio: p.mes_inicio || null
+    };
+  }).filter(d => {
+    if (!d.turnos) return false;
+    if (d.mes_inicio) {
+      const inicio = new Date(d.mes_inicio + 'T12:00:00');
+      const inicioMes = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+      if (fechaMes < inicioMes) return false;
+    }
+    return true;
+  });
+
+  if (!cierreDatos.length) {
+    document.getElementById('cierre-tabla-body').innerHTML =
+      '<tr><td colspan="2" style="padding:1rem;text-align:center;color:var(--text-dim)">Sin horarios asignados o todos excluidos por fecha de inicio.</td></tr>';
+    return;
+  }
+  _renderTablaCierre();
+}
+
+function _renderTablaCierre() {
+  const tbody = document.getElementById('cierre-tabla-body');
+  if (!cierreDatos.length) {
+    tbody.innerHTML = '<tr><td colspan="2" style="padding:1rem;text-align:center;color:var(--text-dim)">Sin datos</td></tr>';
+    document.getElementById('cierre-total').textContent = '$0';
+    return;
+  }
+  let total = 0;
+  tbody.innerHTML = cierreDatos.map((d, i) => {
+    total += d.monto;
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:0.55rem 0.75rem;font-weight:500">
+        ${d.nombre}
+        <div style="font-size:0.68rem;color:var(--text-muted)">${d.turnos} turno${d.turnos!==1?'s':''}</div>
+      </td>
+      <td style="padding:0.4rem 0.5rem;text-align:right">
+        <input type="number" value="${d.monto}" min="0" step="1000"
+          style="width:115px;background:var(--bg);border:1px solid var(--border);border-radius:6px;
+                 padding:0.35rem 0.5rem;color:var(--text);font-family:'DM Mono',monospace;
+                 font-size:0.85rem;text-align:right;outline:none"
+          oninput="cierreDatos[${i}].monto=parseFloat(this.value)||0; actualizarTotalCierre()"
+          onfocus="this.style.borderColor='var(--gold)'"
+          onblur="this.style.borderColor='var(--border)'">
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('cierre-total').textContent = '$' + fmt(total);
+}
+
+function actualizarTotalCierre() {
+  const total = cierreDatos.reduce((s, d) => s + (d.monto || 0), 0);
+  document.getElementById('cierre-total').textContent = '$' + fmt(total);
+}
+
+async function confirmarCierre() {
+  if (!cierreDatos.length) { showToast('Generá la vista previa primero', 'error'); return; }
+  const mes  = document.getElementById('cierre-mes').value;
+  const anio = document.getElementById('cierre-anio').value;
+  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
+
+  if (!confirm(`¿Confirmar cierre de ${mesLabel}? Se generará la deuda para ${cierreDatos.length} profesionales.`)) return;
+
+  let ok = 0, errores = 0;
+  for (const d of cierreDatos) {
+    try {
+      const _mesesIdx = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      const mesNum = String(_mesesIdx.indexOf(mes.toLowerCase()) + 1).padStart(2,'0');
+      const mesFac = `${anio}-${mesNum}-01`;
+
+      const existing = await sbFetch('t_liquidacion_mensual', {
+        select: 'id_liquidacion',
+        filters: [`id_profesional=eq.${d.id_profesional}`, `mes_liquidado=eq.${mesLabel}`],
+        limit: 1
+      });
+
+      if (existing.length > 0) {
+        await sbFetch('t_liquidacion_mensual', {
+          method: 'PATCH',
+          filters: [`id_profesional=eq.${d.id_profesional}`, `mes_liquidado=eq.${mesLabel}`],
+          body: { monto_total: d.monto, mes_facturacion: mesFac }
+        });
+      } else {
+        await sbFetch('t_liquidacion_mensual', {
+          method: 'POST',
+          body: {
+            id_profesional: d.id_profesional,
+            mes_liquidado: mesLabel,
+            monto_total: d.monto,
+            mes_facturacion: mesFac,
+            fecha_cierre: new Date().toISOString().split('T')[0]
+          }
+        });
+      }
+      ok++;
+    } catch(e) {
+      errores++;
+      console.error(`Error prof ${d.id_profesional}:`, e);
+    }
+  }
+
+  if (errores === 0) {
+    showToast(`Cierre ${mesLabel} generado ✓ (${ok} profesionales)`, 'success');
+  } else {
+    showToast(`${ok} OK, ${errores} errores`, 'error');
+  }
+
+  await cargarDeudaGlobal();
+  document.getElementById('cierre-preview').style.display = 'none';
+  cierreDatos = [];
+}
+
+// ── EDITAR FACTURACIÓN ──
+async function cargarFacturacionExistente() {
+  await cargarFacturacionMes();
+}
+
+async function cargarFacturacionMes(mes, anio) {
+  if (!mes) {
+    mes  = document.getElementById('edit-cierre-mes')?.value || '';
+    anio = document.getElementById('edit-cierre-anio')?.value || '';
+  }
+  const listaEl = document.getElementById('edit-cierre-lista');
+  if (!listaEl) return;
+  listaEl.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando…</div>';
+
+  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
+
+  try {
+    const [registros, pagosDelMes] = await Promise.all([
+      sbFetch('t_liquidacion_mensual', {
+        select: 'id_liquidacion,id_profesional,mes_liquidado,monto_total,fecha_cierre',
+        filters: [`mes_liquidado=eq.${mesLabel}`],
+        order: 'id_profesional.asc', limit: 100
+      }),
+      sbFetch('pagos', { select: 'id_profesional,monto,mes_abonado', limit: 1000 })
+    ]);
+
+    const pagadoPorProf = {};
+    const mesNorm = mes.toLowerCase();
+    pagosDelMes.forEach(p => {
+      const k = normMes(p.mes_abonado);
+      if (k === mesNorm) {
+        pagadoPorProf[p.id_profesional] = (pagadoPorProf[p.id_profesional]||0) + (parseFloat(p.monto)||0);
+      }
+    });
+
+    if (!registros.length) {
+      listaEl.innerHTML = `<div class="empty" style="padding:2rem">
+        <div class="empty-icon">⊟</div>
+        No hay facturación para ${mesLabel}.<br>
+        <small style="color:var(--text-dim)">Generala desde "Nuevo cierre".</small>
+      </div>`;
+      return;
+    }
+
+    const profMap = {};
+    profesionales.forEach(p => profMap[p.ID_Profesional] = p.Nombre_Medico);
+
+    let total = 0;
+    const ids = registros.map(r => r.id_liquidacion);
+
+    listaEl.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)">
+          ${mesLabel} · ${registros.length} profesionales
+        </div>
+        <button onclick="borrarTodasFacturaciones([${ids.join(',')}], '${mesLabel}')"
+          style="background:rgba(201,85,74,0.12);border:1px solid rgba(201,85,74,0.3);border-radius:6px;
+                 padding:0.35rem 0.75rem;cursor:pointer;font-size:0.75rem;color:var(--red);font-weight:600">
+          🗑 Borrar todo
+        </button>
+      </div>
+      ${registros.map(r => {
+        total += parseFloat(r.monto_total)||0;
+        const nombre = profMap[r.id_profesional] || 'ID '+r.id_profesional;
+        const pagado = pagadoPorProf[r.id_profesional] || 0;
+        const tienePago = pagado > 0;
+        return `<div class="card" style="margin-bottom:0.5rem" id="edit-reg-${r.id_liquidacion}">
+          <div class="card-row" style="align-items:center">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nombre}</div>
+              <div class="card-sub" style="display:flex;gap:0.5rem;align-items:center">
+                ${r.fecha_cierre ? fmtFecha(r.fecha_cierre) : '—'}
+                ${tienePago ? `<span style="background:rgba(90,158,122,0.15);color:var(--green);
+                  border-radius:4px;padding:0.1rem 0.4rem;font-size:0.65rem;font-weight:600">
+                  Pagó $${fmt(pagado)}</span>` : ''}
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0">
+              <input type="number" value="${r.monto_total}" min="0" step="1000"
+                id="edit-monto-${r.id_liquidacion}" data-pagado="${pagado}"
+                style="width:105px;background:${tienePago?'rgba(90,158,122,0.08)':'var(--bg)'};border:1px solid ${tienePago?'rgba(90,158,122,0.3)':'var(--border)'};border-radius:6px;padding:0.35rem 0.4rem;color:var(--text);font-size:0.82rem;text-align:right;outline:none"
+                onfocus="this.style.borderColor='var(--gold)'"
+                onblur="this.style.borderColor='var(--border)'">
+              <button onclick="guardarEdicionFacturacion(${r.id_liquidacion})"
+                style="background:var(--gold);color:var(--surface);border:none;border-radius:6px;
+                       padding:0.35rem 0.55rem;cursor:pointer;font-size:0.78rem;font-weight:600">✓</button>
+              <button onclick="borrarFacturacion(${r.id_liquidacion}, '${nombre}', '${mesLabel}', ${pagado})"
+                style="background:rgba(201,85,74,0.1);border:1px solid rgba(201,85,74,0.3);
+                       border-radius:6px;padding:0.35rem 0.45rem;cursor:pointer;font-size:0.75rem;color:var(--red)">✕</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+      <div style="text-align:right;font-family:'DM Mono',monospace;font-weight:700;font-size:1rem;
+                  color:var(--red);padding:0.75rem 0;border-top:2px solid var(--border);margin-top:0.25rem">
+        Total: $${fmt(total)}
+      </div>`;
+  } catch(e) {
+    listaEl.innerHTML = `<div class="empty" style="color:var(--red)">Error: ${e.message}</div>`;
+  }
+}
+
+async function guardarEdicionFacturacion(idLiq) {
+  const input = document.getElementById(`edit-monto-${idLiq}`);
+  const monto = parseFloat(input?.value) || 0;
+  const pagado = parseFloat(input?.dataset.pagado) || 0;
+
+  if (pagado > 0 && monto < pagado) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '700';
+    overlay.innerHTML = `
+      <div class="modal-sheet" style="max-width:380px" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div style="text-align:center;margin-bottom:1rem">
+          <div style="font-size:1.8rem;margin-bottom:0.5rem">⚠️</div>
+          <div class="modal-title" style="font-size:1.1rem">No se puede reducir</div>
+        </div>
+        <div style="background:rgba(201,85,74,0.08);border:1px solid rgba(201,85,74,0.25);
+                    border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;
+                    color:var(--text);line-height:1.6">
+          Ya tiene un pago de <strong style="color:var(--green)">$${fmt(pagado)}</strong>.<br>
+          Primero borrá el pago desde <strong>Pagos</strong>.
+        </div>
+        <button onclick="this.closest('.modal-overlay').remove()" class="btn-submit">Entendido</button>
+      </div>`;
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+    input.value = parseFloat(input.defaultValue) || pagado;
+    return;
+  }
+
+  try {
+    await sbFetch('t_liquidacion_mensual', {
+      method: 'PATCH', filters: [`id_liquidacion=eq.${idLiq}`],
+      body: { monto_total: monto }
+    });
+    showToast('Monto actualizado ✓', 'success');
+    await cargarDeudaGlobal();
+  } catch(e) { showToast('Error al guardar', 'error'); }
+}
+
+async function borrarTodasFacturaciones(ids, mesLabel) {
+  if (!confirm(`¿Eliminar TODA la facturación de ${mesLabel} (${ids.length} registros)?`)) return;
+  let ok = 0;
+  for (const id of ids) {
+    try {
+      await sbFetch('t_liquidacion_mensual', { method: 'DELETE', filters: [`id_liquidacion=eq.${id}`] });
+      document.getElementById(`edit-reg-${id}`)?.remove();
+      ok++;
+    } catch(e) {}
+  }
+  showToast(`${ok} registros eliminados ✓`, 'success');
+  await cargarDeudaGlobal();
+  await cargarFacturacionMes();
+}
+
+async function borrarFacturacion(idLiq, nombre, mesLabel, pagado) {
+  pagado = pagado || 0;
+  if (pagado > 0) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '700';
+    overlay.innerHTML = `
+      <div class="modal-sheet" style="max-width:380px" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div style="text-align:center;margin-bottom:1rem">
+          <div style="font-size:1.8rem;margin-bottom:0.5rem">🔒</div>
+          <div class="modal-title" style="font-size:1.1rem">No se puede eliminar</div>
+        </div>
+        <div style="background:rgba(201,85,74,0.08);border:1px solid rgba(201,85,74,0.25);
+                    border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;
+                    color:var(--text);line-height:1.6">
+          <strong>${nombre}</strong> ya tiene pago de <strong style="color:var(--green)">$${fmt(pagado)}</strong>.<br>
+          Primero borrá el pago desde <strong>Pagos</strong>.
+        </div>
+        <button onclick="this.closest('.modal-overlay').remove()" class="btn-submit">Entendido</button>
+      </div>`;
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+    return;
+  }
+  if (!confirm(`¿Eliminar la liquidación de ${nombre} para ${mesLabel}?`)) return;
+  try {
+    await sbFetch('t_liquidacion_mensual', { method: 'DELETE', filters: [`id_liquidacion=eq.${idLiq}`] });
+    showToast('Eliminado ✓', 'success');
+    document.getElementById(`edit-reg-${idLiq}`)?.remove();
+    await cargarDeudaGlobal();
+  } catch(e) { showToast('Error al eliminar', 'error'); }
 }
 
 // ── UI HELPERS ──
@@ -3628,6 +4113,7 @@ window.onload = async () => {
 
       if (res.ok) {
         const email = currentUser?.email || '';
+        await cargarRolUsuario(email);
         document.getElementById('status-text').textContent = email.split('@')[0];
         iniciarApp();
         return;
@@ -3649,6 +4135,7 @@ window.onload = async () => {
               user: newSession.user
             }));
             const email = currentUser?.email || '';
+            await cargarRolUsuario(email);
             document.getElementById('status-text').textContent = email.split('@')[0];
             iniciarApp();
             return;

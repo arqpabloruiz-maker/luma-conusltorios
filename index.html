@@ -1735,20 +1735,9 @@ async function restaurarBackup() {
     await new Promise(r => setTimeout(r, 1000));
     if (status) status.textContent = `Restaurado desde backup del ${fechaArchivo}`;
     showToast('Datos restaurados correctamente', 'success');
-    // Esperar que Supabase procese los datos
-    await new Promise(r => setTimeout(r, 1500));
-    // Limpiar grillaDatos para forzar recarga completa
-    grillaDatos = {};
-    // Recargar toda la app
-    await cargarProfesionales();
-    await cargarHorarios();
-    await cargarPagos();
-    await cargarGrilla();
-    await cargarDashboard();
-    _renderGrillaHTML();
-    // Ir a la grilla
-    const btnGrilla = document.querySelector('.nav-btn:first-child');
-    if (btnGrilla) showView('grilla', btnGrilla);
+    // Esperar que Supabase procese todo y recargar la página
+    await new Promise(r => setTimeout(r, 2000));
+    window.location.reload();
   } catch(e) {
     if (status) status.textContent = 'Error al restaurar';
     showToast('Error: ' + (e.message || 'No se pudo restaurar'), 'error');

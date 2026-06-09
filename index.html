@@ -1735,6 +1735,7 @@ async function restaurarBackup() {
     await new Promise(r => setTimeout(r, 1000));
     if (status) status.textContent = `Restaurado desde backup del ${fechaArchivo}`;
     showToast('Datos restaurados correctamente', 'success');
+    if (btn) { btn.textContent = 'Restaurar última copia'; btn.disabled = false; }
     // Esperar que Supabase procese todo y recargar la página
     await new Promise(r => setTimeout(r, 2000));
     window.location.reload();
@@ -1742,7 +1743,6 @@ async function restaurarBackup() {
     if (status) status.textContent = 'Error al restaurar';
     showToast('Error: ' + (e.message || 'No se pudo restaurar'), 'error');
     googleAccessToken = null;
-  } finally {
     if (btn) { btn.textContent = 'Restaurar última copia'; btn.disabled = false; }
   }
 }

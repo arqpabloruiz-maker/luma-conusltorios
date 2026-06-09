@@ -1703,11 +1703,13 @@ async function restaurarBackup() {
       await new Promise(r => setTimeout(r, 500));
       // Insertar sin ID para que Supabase genere nuevos IDs autoincrementales
       const horariosSinId = data.horariosfijos.map(({ID_Horario, ...h}) => h);
-      await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
+      console.log('[RESTORE] horarios a insertar:', horariosSinId.length, horariosSinId[0]);
+      const resH = await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(horariosSinId)
       });
+      console.log('[RESTORE] horarios status:', resH.status, await resH.text());
     }
     if (data.profesionales?.length) {
       await fetch(`${SB_URL}/rest/v1/profesionales?ID_Profesional=gte.0`, {

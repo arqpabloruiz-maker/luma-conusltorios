@@ -1694,7 +1694,8 @@ async function restaurarBackup() {
     const descargar = await fetch(`https://www.googleapis.com/drive/v3/files/${archivo.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await descargar.json();
     if (status) status.textContent = 'Restaurando datos…';
-    // 1. Borrar horarios primero (dependen de profesionales)
+
+    // 1. Borrar horarios y pagos (no profesionales para mantener IDs)
     await fetch(`${SB_URL}/rest/v1/horariosfijos?ID_Horario=gte.0`, {
       method: 'DELETE',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
@@ -1703,66 +1704,33 @@ async function restaurarBackup() {
       method: 'DELETE',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
     });
-    await fetch(`${SB_URL}/rest/v1/profesionales?ID_Profesional=gte.0`, {
-      method: 'DELETE',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
-    });
     await new Promise(r => setTimeout(r, 800));
 
-    // 2. Insertar profesionales primero
+    // 2. Upsert profesionales CON sus IDs originales
     if (data.profesionales?.length) {
-      const profsSinId = data.profesionales.map(({ID_Profesional, ...p}) => p);
-      const resP = await fetch(`${SB_URL}/rest/v1/profesionales`, {
+      await fetch(`${SB_URL}/rest/v1/profesionales`, {
         method: 'POST',
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-        body: JSON.stringify(profsSinId)
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(data.profesionales)
       });
-      console.log('[RESTORE] profesionales status:', resP.status);
     }
     await new Promise(r => setTimeout(r, 500));
 
-    // 3. Insertar horarios después (necesitan profesionales existentes)
+    // 3. Insertar horarios sin ID (autoincremental) pero con ID_Profesional original
     if (data.horariosfijos?.length) {
-      // Obtener el mapa de nombres para referenciar por nombre en lugar de ID
-      const profsActuales = await fetch(`${SB_URL}/rest/v1/profesionales?select=ID_Profesional,Nombre_Medico`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
-      }).then(r => r.json());
-      
-      // Mapa nombre -> nuevo ID
-      const profNombreAId = {};
-      profsActuales.forEach(p => { profNombreAId[p.Nombre_Medico] = p.ID_Profesional; });
-      
-      // Mapa viejo ID -> nombre (del backup)
-      const profIdANombre = {};
-      data.profesionales.forEach(p => { profIdANombre[p.ID_Profesional] = p.Nombre_Medico; });
-
-      const horariosSinId = data.horariosfijos.map(({ID_Horario, ID_Profesional, ...h}) => ({
-        ...h,
-        ID_Profesional: profNombreAId[profIdANombre[ID_Profesional]] || ID_Profesional
-      }));
+      const horariosSinId = data.horariosfijos.map(({ID_Horario, ...h}) => h);
       const resH = await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(horariosSinId)
       });
-      console.log('[RESTORE] horarios status:', resH.status, await resH.text());
+      console.log('[RESTORE] horarios:', resH.status, await resH.text());
     }
     await new Promise(r => setTimeout(r, 500));
 
-    // 4. Insertar pagos al final
+    // 4. Insertar pagos sin ID
     if (data.pagos?.length) {
-      const profsActuales2 = await fetch(`${SB_URL}/rest/v1/profesionales?select=ID_Profesional,Nombre_Medico`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
-      }).then(r => r.json());
-      const profNombreAId2 = {};
-      profsActuales2.forEach(p => { profNombreAId2[p.Nombre_Medico] = p.ID_Profesional; });
-      const profIdANombre2 = {};
-      data.profesionales.forEach(p => { profIdANombre2[p.ID_Profesional] = p.Nombre_Medico; });
-
-      const pagosSinId = data.pagos.map(({id_pagos, id_profesional, ...p}) => ({
-        ...p,
-        id_profesional: profNombreAId2[profIdANombre2[id_profesional]] || id_profesional
-      }));
+      const pagosSinId = data.pagos.map(({id_pagos, ...p}) => p);
       await fetch(`${SB_URL}/rest/v1/pagos`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },

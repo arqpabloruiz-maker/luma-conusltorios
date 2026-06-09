@@ -1705,6 +1705,13 @@ async function restaurarBackup() {
     }
     if (status) status.textContent = `Restaurado desde backup del ${fechaArchivo}`;
     showToast('Datos restaurados correctamente', 'success');
+    // Recargar toda la app
+    await cargarProfesionales();
+    await cargarHorarios();
+    await cargarPagos();
+    await cargarGrilla();
+    _renderGrillaHTML();
+    await cargarDashboard();
   } catch(e) {
     if (status) status.textContent = 'Error al restaurar';
     showToast('Error: ' + (e.message || 'No se pudo restaurar'), 'error');

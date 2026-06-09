@@ -1701,10 +1701,12 @@ async function restaurarBackup() {
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
       });
       await new Promise(r => setTimeout(r, 500));
+      // Insertar sin ID para que Supabase genere nuevos IDs autoincrementales
+      const horariosSinId = data.horariosfijos.map(({ID_Horario, ...h}) => h);
       await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(data.horariosfijos)
+        body: JSON.stringify(horariosSinId)
       });
     }
     if (data.profesionales?.length) {
@@ -1713,10 +1715,11 @@ async function restaurarBackup() {
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
       });
       await new Promise(r => setTimeout(r, 500));
+      const profsSinId = data.profesionales.map(({ID_Profesional, ...p}) => p);
       await fetch(`${SB_URL}/rest/v1/profesionales`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(data.profesionales)
+        body: JSON.stringify(profsSinId)
       });
     }
     if (data.pagos?.length) {
@@ -1725,10 +1728,11 @@ async function restaurarBackup() {
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
       });
       await new Promise(r => setTimeout(r, 500));
+      const pagosSinId = data.pagos.map(({id_pagos, ...p}) => p);
       await fetch(`${SB_URL}/rest/v1/pagos`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(data.pagos)
+        body: JSON.stringify(pagosSinId)
       });
     }
     // Esperar que Supabase procese todo

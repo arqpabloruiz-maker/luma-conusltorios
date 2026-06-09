@@ -3952,6 +3952,75 @@ async function borrarFacturacion(idLiq, nombre, mesLabel, pagado) {
   } catch(e) { showToast('Error al eliminar', 'error'); }
 }
 
+// ── RECIBO ──
+function mostrarRecibo({ nombre, telefono, monto, mes, concepto, fecha }) {
+  const overlay = document.getElementById('recibo-overlay');
+  const contenido = document.getElementById('recibo-contenido');
+  if (!overlay || !contenido) return;
+
+  const fechaFmt = fecha ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1);
+  const montoFmt = fmt(monto);
+
+  contenido.innerHTML = `
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="font-size:1.5rem;margin-bottom:0.25rem">🧾</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--text)">Recibo de pago</div>
+      <div style="font-size:0.75rem;color:var(--text-muted)">${fechaFmt}</div>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border)">
+        <span style="font-size:0.78rem;color:var(--text-muted)">Profesional</span>
+        <span style="font-size:0.85rem;font-weight:600">${nombre}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border)">
+        <span style="font-size:0.78rem;color:var(--text-muted)">Mes</span>
+        <span style="font-size:0.85rem;font-weight:600">${mesLabel}</span>
+      </div>
+      ${concepto ? `<div style="display:flex;justify-content:space-between;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border)">
+        <span style="font-size:0.78rem;color:var(--text-muted)">Concepto</span>
+        <span style="font-size:0.85rem">${concepto}</span>
+      </div>` : ''}
+      <div style="display:flex;justify-content:space-between;padding:0.75rem 0.85rem;background:rgba(90,158,122,0.06)">
+        <span style="font-size:0.85rem;font-weight:600">Total abonado</span>
+        <span style="font-family:'DM Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--green)">$${montoFmt}</span>
+      </div>
+    </div>`;
+
+  // Texto para copiar/WhatsApp
+  window._reciboTexto = `Recibo LUMA Consultorios\n${fechaFmt}\n\nProfesional: ${nombre}\nMes: ${mesLabel}${concepto ? '\nConcepto: ' + concepto : ''}\nMonto: $${montoFmt}\n\n¡Gracias!`;
+
+  // Botón WhatsApp
+  const waWrap = document.getElementById('wa-link-wrap');
+  if (waWrap && telefono) {
+    const tel = telefono.replace(/[^0-9]/g, '');
+    const msg = encodeURIComponent(window._reciboTexto);
+    waWrap.innerHTML = `<a href="https://wa.me/54${tel}?text=${msg}" target="_blank"
+      style="display:flex;align-items:center;justify-content:center;gap:0.4rem;
+             background:#25D366;color:white;border-radius:8px;padding:0.7rem 1rem;
+             font-weight:600;font-size:0.85rem;text-decoration:none;width:100%">
+      📱 Enviar por WhatsApp
+    </a>`;
+  } else if (waWrap) {
+    waWrap.innerHTML = '';
+  }
+
+  overlay.classList.remove('hidden');
+}
+
+function cerrarRecibo(e) {
+  if (!e || e.target === document.getElementById('recibo-overlay')) {
+    document.getElementById('recibo-overlay')?.classList.add('hidden');
+  }
+}
+
+function copiarRecibo() {
+  if (!window._reciboTexto) return;
+  navigator.clipboard.writeText(window._reciboTexto)
+    .then(() => showToast('Recibo copiado ✓', 'success'))
+    .catch(() => showToast('No se pudo copiar', 'error'));
+}
+
 // ── UI HELPERS ──
 function showView(name, btn) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));

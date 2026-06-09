@@ -1505,7 +1505,7 @@ async function enviarResetPassword() {
       headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         email,
-        redirect_to: 'https://arqpabloruiz-maker.github.io/luma-conusltorios/'
+        redirect_to: 'https://arqpabloruiz-maker.github.io/luma'
       })
     });
     if (!res.ok) {
@@ -1638,14 +1638,12 @@ async function hacerBackup() {
   if (status) status.textContent = 'Conectando con Google Drive…';
   try {
     const token = await obtenerTokenGoogle();
-    const [profs, horarios, pagos, liquidaciones, consults] = await Promise.all([
+    const [profs, horarios, pagos] = await Promise.all([
       sbFetch('profesionales', { limit: 1000 }),
       sbFetch('horariosfijos', { limit: 1000 }),
-      sbFetch('pagos', { limit: 5000 }),
-      sbFetch('t_liquidacion_mensual', { limit: 5000 }),
-      sbFetch('consultorios', { limit: 50 })
+      sbFetch('pagos', { limit: 5000 })
     ]);
-    const contenido = JSON.stringify({ fecha: new Date().toISOString(), version: 'v5', profesionales: profs, horariosfijos: horarios, pagos, liquidaciones, consultorios: consults }, null, 2);
+    const contenido = JSON.stringify({ fecha: new Date().toISOString(), version: 'v5', profesionales: profs, horariosfijos: horarios, pagos }, null, 2);
     if (status) status.textContent = 'Buscando archivo existente…';
     const buscar = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name)`, { headers: { 'Authorization': `Bearer ${token}` } });
     const buscarData = await buscar.json();
@@ -1696,88 +1694,22 @@ async function restaurarBackup() {
     const descargar = await fetch(`https://www.googleapis.com/drive/v3/files/${archivo.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await descargar.json();
     if (status) status.textContent = 'Restaurando datos…';
-
-    // 1. Borrar horarios y pagos (no profesionales para mantener IDs)
-    await fetch(`${SB_URL}/rest/v1/horariosfijos?ID_Horario=gte.0`, {
-      method: 'DELETE',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
-    });
-    await fetch(`${SB_URL}/rest/v1/pagos?id_pagos=gte.0`, {
-      method: 'DELETE',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
-    });
-    await new Promise(r => setTimeout(r, 800));
-
-    // 2. Upsert profesionales CON sus IDs originales
-    if (data.profesionales?.length) {
-      await fetch(`${SB_URL}/rest/v1/profesionales`, {
-        method: 'POST',
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify(data.profesionales)
-      });
-    }
-    await new Promise(r => setTimeout(r, 500));
-
-    // 3. Insertar horarios sin ID (autoincremental) pero con ID_Profesional original
-    if (data.horariosfijos?.length) {
-      const horariosSinId = data.horariosfijos.map(({ID_Horario, ...h}) => h);
-      const resH = await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
-        method: 'POST',
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(horariosSinId)
-      });
-      console.log('[RESTORE] horarios:', resH.status, await resH.text());
-    }
-    await new Promise(r => setTimeout(r, 500));
-
-    // 4. Insertar pagos sin ID
-    if (data.pagos?.length) {
-      const pagosSinId = data.pagos.map(({id_pagos, ...p}) => p);
-      await fetch(`${SB_URL}/rest/v1/pagos`, {
-        method: 'POST',
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(pagosSinId)
-      });
-    }
-    await new Promise(r => setTimeout(r, 500));
-
-    // 5. Restaurar liquidaciones sin ID
-    if (data.liquidaciones?.length) {
-      await fetch(`${SB_URL}/rest/v1/t_liquidacion_mensual?id_liquidacion=gte.0`, {
-        method: 'DELETE',
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
-      });
-      await new Promise(r => setTimeout(r, 500));
-      const liqSinId = data.liquidaciones.map(({id_liquidacion, ...l}) => l);
-      await fetch(`${SB_URL}/rest/v1/t_liquidacion_mensual`, {
-        method: 'POST',
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(liqSinId)
-      });
-    }
-
-    // 6. Restaurar precios de consultorios
-    if (data.consultorios?.length) {
-      for (const c of data.consultorios) {
-        await fetch(`${SB_URL}/rest/v1/consultorios?id_consultorio=eq.${c.id_consultorio}`, {
-          method: 'PATCH',
-          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ precio_modulo: c.precio_modulo })
+    for (const [tabla, filas] of [['profesionales', data.profesionales], ['horariosfijos', data.horariosfijos], ['pagos', data.pagos]]) {
+      if (filas && filas.length) {
+        await fetch(`${SB_URL}/rest/v1/${tabla}`, {
+          method: 'POST',
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+          body: JSON.stringify(filas)
         });
       }
     }
-    // Esperar que Supabase procese todo
-    await new Promise(r => setTimeout(r, 1000));
     if (status) status.textContent = `Restaurado desde backup del ${fechaArchivo}`;
     showToast('Datos restaurados correctamente', 'success');
-    if (btn) { btn.textContent = 'Restaurar última copia'; btn.disabled = false; }
-    // Esperar que Supabase procese todo y recargar la página
-    await new Promise(r => setTimeout(r, 2000));
-    window.location.reload();
   } catch(e) {
     if (status) status.textContent = 'Error al restaurar';
     showToast('Error: ' + (e.message || 'No se pudo restaurar'), 'error');
     googleAccessToken = null;
+  } finally {
     if (btn) { btn.textContent = 'Restaurar última copia'; btn.disabled = false; }
   }
 }
@@ -3981,75 +3913,6 @@ async function borrarFacturacion(idLiq, nombre, mesLabel, pagado) {
   } catch(e) { showToast('Error al eliminar', 'error'); }
 }
 
-// ── RECIBO ──
-function mostrarRecibo({ nombre, telefono, monto, mes, concepto, fecha }) {
-  const overlay = document.getElementById('recibo-overlay');
-  const contenido = document.getElementById('recibo-contenido');
-  if (!overlay || !contenido) return;
-
-  const fechaFmt = fecha ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
-  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1);
-  const montoFmt = fmt(monto);
-
-  contenido.innerHTML = `
-    <div style="text-align:center;margin-bottom:1rem">
-      <div style="font-size:1.5rem;margin-bottom:0.25rem">🧾</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--text)">Recibo de pago</div>
-      <div style="font-size:0.75rem;color:var(--text-muted)">${fechaFmt}</div>
-    </div>
-    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem">
-      <div style="display:flex;justify-content:space-between;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border)">
-        <span style="font-size:0.78rem;color:var(--text-muted)">Profesional</span>
-        <span style="font-size:0.85rem;font-weight:600">${nombre}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border)">
-        <span style="font-size:0.78rem;color:var(--text-muted)">Mes</span>
-        <span style="font-size:0.85rem;font-weight:600">${mesLabel}</span>
-      </div>
-      ${concepto ? `<div style="display:flex;justify-content:space-between;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border)">
-        <span style="font-size:0.78rem;color:var(--text-muted)">Concepto</span>
-        <span style="font-size:0.85rem">${concepto}</span>
-      </div>` : ''}
-      <div style="display:flex;justify-content:space-between;padding:0.75rem 0.85rem;background:rgba(90,158,122,0.06)">
-        <span style="font-size:0.85rem;font-weight:600">Total abonado</span>
-        <span style="font-family:'DM Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--green)">$${montoFmt}</span>
-      </div>
-    </div>`;
-
-  // Texto para copiar/WhatsApp
-  window._reciboTexto = `Recibo LUMA Consultorios\n${fechaFmt}\n\nProfesional: ${nombre}\nMes: ${mesLabel}${concepto ? '\nConcepto: ' + concepto : ''}\nMonto: $${montoFmt}\n\n¡Gracias!`;
-
-  // Botón WhatsApp
-  const waWrap = document.getElementById('wa-link-wrap');
-  if (waWrap && telefono) {
-    const tel = telefono.replace(/[^0-9]/g, '');
-    const msg = encodeURIComponent(window._reciboTexto);
-    waWrap.innerHTML = `<a href="https://wa.me/54${tel}?text=${msg}" target="_blank"
-      style="display:flex;align-items:center;justify-content:center;gap:0.4rem;
-             background:#25D366;color:white;border-radius:8px;padding:0.7rem 1rem;
-             font-weight:600;font-size:0.85rem;text-decoration:none;width:100%">
-      📱 Enviar por WhatsApp
-    </a>`;
-  } else if (waWrap) {
-    waWrap.innerHTML = '';
-  }
-
-  overlay.classList.remove('hidden');
-}
-
-function cerrarRecibo(e) {
-  if (!e || e.target === document.getElementById('recibo-overlay')) {
-    document.getElementById('recibo-overlay')?.classList.add('hidden');
-  }
-}
-
-function copiarRecibo() {
-  if (!window._reciboTexto) return;
-  navigator.clipboard.writeText(window._reciboTexto)
-    .then(() => showToast('Recibo copiado ✓', 'success'))
-    .catch(() => showToast('No se pudo copiar', 'error'));
-}
-
 // ── UI HELPERS ──
 function showView(name, btn) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -4155,6 +4018,8 @@ window.onload = async () => {
       });
 
       if (res.ok) {
+        const userData = await res.json();
+        currentUser = userData; // usar el usuario real verificado por Supabase
         const email = currentUser?.email || '';
         await cargarRolUsuario(email);
         document.getElementById('status-text').textContent = email.split('@')[0];

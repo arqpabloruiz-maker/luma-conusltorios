@@ -1700,6 +1700,7 @@ async function restaurarBackup() {
         method: 'DELETE',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
       });
+      await new Promise(r => setTimeout(r, 500));
       await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
@@ -1711,6 +1712,7 @@ async function restaurarBackup() {
         method: 'DELETE',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
       });
+      await new Promise(r => setTimeout(r, 500));
       await fetch(`${SB_URL}/rest/v1/profesionales`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
@@ -1722,12 +1724,15 @@ async function restaurarBackup() {
         method: 'DELETE',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
       });
+      await new Promise(r => setTimeout(r, 500));
       await fetch(`${SB_URL}/rest/v1/pagos`, {
         method: 'POST',
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(data.pagos)
       });
     }
+    // Esperar que Supabase procese todo
+    await new Promise(r => setTimeout(r, 1000));
     if (status) status.textContent = `Restaurado desde backup del ${fechaArchivo}`;
     showToast('Datos restaurados correctamente', 'success');
     // Esperar que Supabase procese los datos

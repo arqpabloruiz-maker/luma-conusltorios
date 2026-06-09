@@ -1694,14 +1694,39 @@ async function restaurarBackup() {
     const descargar = await fetch(`https://www.googleapis.com/drive/v3/files/${archivo.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await descargar.json();
     if (status) status.textContent = 'Restaurando datos…';
-    for (const [tabla, filas] of [['profesionales', data.profesionales], ['horariosfijos', data.horariosfijos], ['pagos', data.pagos]]) {
-      if (filas && filas.length) {
-        await fetch(`${SB_URL}/rest/v1/${tabla}`, {
-          method: 'POST',
-          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify(filas)
-        });
-      }
+    // Borrar datos actuales y reinsertar desde backup
+    if (data.horariosfijos?.length) {
+      await fetch(`${SB_URL}/rest/v1/horariosfijos?ID_Horario=gte.0`, {
+        method: 'DELETE',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
+      });
+      await fetch(`${SB_URL}/rest/v1/horariosfijos`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(data.horariosfijos)
+      });
+    }
+    if (data.profesionales?.length) {
+      await fetch(`${SB_URL}/rest/v1/profesionales?ID_Profesional=gte.0`, {
+        method: 'DELETE',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
+      });
+      await fetch(`${SB_URL}/rest/v1/profesionales`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(data.profesionales)
+      });
+    }
+    if (data.pagos?.length) {
+      await fetch(`${SB_URL}/rest/v1/pagos?id_pagos=gte.0`, {
+        method: 'DELETE',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
+      });
+      await fetch(`${SB_URL}/rest/v1/pagos`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(data.pagos)
+      });
     }
     if (status) status.textContent = `Restaurado desde backup del ${fechaArchivo}`;
     showToast('Datos restaurados correctamente', 'success');

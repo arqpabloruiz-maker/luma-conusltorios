@@ -1638,12 +1638,14 @@ async function hacerBackup() {
   if (status) status.textContent = 'Conectando con Google Drive…';
   try {
     const token = await obtenerTokenGoogle();
-    const [profs, horarios, pagos] = await Promise.all([
+    const [profs, horarios, pagos, liquidaciones, consults] = await Promise.all([
       sbFetch('profesionales', { limit: 1000 }),
       sbFetch('horariosfijos', { limit: 1000 }),
-      sbFetch('pagos', { limit: 5000 })
+      sbFetch('pagos', { limit: 5000 }),
+      sbFetch('t_liquidacion_mensual', { limit: 5000 }),
+      sbFetch('consultorios', { limit: 50 })
     ]);
-    const contenido = JSON.stringify({ fecha: new Date().toISOString(), version: 'v5', profesionales: profs, horariosfijos: horarios, pagos }, null, 2);
+    const contenido = JSON.stringify({ fecha: new Date().toISOString(), version: 'v5', profesionales: profs, horariosfijos: horarios, pagos, liquidaciones, consultorios: consults }, null, 2);
     if (status) status.textContent = 'Buscando archivo existente…';
     const buscar = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'+and+trashed=false&fields=files(id,name)`, { headers: { 'Authorization': `Bearer ${token}` } });
     const buscarData = await buscar.json();
@@ -1736,6 +1738,33 @@ async function restaurarBackup() {
         headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(pagosSinId)
       });
+    }
+    await new Promise(r => setTimeout(r, 500));
+
+    // 5. Restaurar liquidaciones sin ID
+    if (data.liquidaciones?.length) {
+      await fetch(`${SB_URL}/rest/v1/t_liquidacion_mensual?id_liquidacion=gte.0`, {
+        method: 'DELETE',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}` }
+      });
+      await new Promise(r => setTimeout(r, 500));
+      const liqSinId = data.liquidaciones.map(({id_liquidacion, ...l}) => l);
+      await fetch(`${SB_URL}/rest/v1/t_liquidacion_mensual`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(liqSinId)
+      });
+    }
+
+    // 6. Restaurar precios de consultorios
+    if (data.consultorios?.length) {
+      for (const c of data.consultorios) {
+        await fetch(`${SB_URL}/rest/v1/consultorios?id_consultorio=eq.${c.id_consultorio}`, {
+          method: 'PATCH',
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ precio_modulo: c.precio_modulo })
+        });
+      }
     }
     // Esperar que Supabase procese todo
     await new Promise(r => setTimeout(r, 1000));

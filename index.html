@@ -921,7 +921,7 @@
         <div class="status-dot"></div>
         <span id="status-text" style="font-size:0.7rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Conectado</span>
       </div>
-      <button class="btn-icon" onclick="cerrarSesion()" title="Cerrar sesión" style="font-size:0.75rem;width:auto;padding:0 0.6rem">Salir</button>
+      <button class="btn-icon" onclick="if(confirm('¿Querés salir de LUMA?')) cerrarSesion()" title="Cerrar sesión" style="font-size:0.75rem;width:auto;padding:0 0.6rem">Salir</button>
     </div>
   </header>
 
@@ -1267,15 +1267,16 @@
       <div class="section-title">Consultorios</div>
       <div class="section-sub">Precios de módulo por consultorio · Los cambios aplican a cierres futuros</div>
 
-      <div id="consul-lista">
-        <div class="loading"><div class="spinner"></div>Cargando…</div>
-      </div>
-
-      <div style="background:rgba(193,122,111,0.08);border:1px solid rgba(193,122,111,0.2);
-                  border-radius:10px;padding:0.75rem 1rem;margin-top:1rem;font-size:0.78rem;
-                  color:var(--text-muted);line-height:1.5">
-        ⚑ Al actualizar el precio de un consultorio, las liquidaciones ya generadas <strong>no se modifican</strong>.
-        Solo afecta los cierres que hagas a partir de ahora.
+      <div style="max-width:480px;margin:0 auto">
+        <div id="consul-lista">
+          <div class="loading"><div class="spinner"></div>Cargando…</div>
+        </div>
+        <div style="background:rgba(193,122,111,0.08);border:1px solid rgba(193,122,111,0.2);
+                    border-radius:10px;padding:0.65rem 0.85rem;margin-top:0.5rem;font-size:0.76rem;
+                    color:var(--text-muted);line-height:1.5">
+          ⚑ Al actualizar el precio de un consultorio, las liquidaciones ya generadas <strong>no se modifican</strong>.
+          Solo afecta los cierres que hagas a partir de ahora.
+        </div>
       </div>
     </div>
 
@@ -1283,42 +1284,49 @@
 
 
   <!-- VIEW CONFIG -->
-  <div id="view-config" class="view" style="padding:1.25rem; padding-bottom:5rem;">
-    <div class="section-title">Configuración</div>
+  <div id="view-config" class="view">
+    <div style="max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:0.75rem">
 
-    <div class="card" style="margin-bottom:1rem">
-      <div class="card-row" style="margin-bottom:0.75rem">
-        <div class="card-name">Mi cuenta</div>
+      <div>
+        <div class="section-title">Backup</div>
+        <div class="section-sub">Copia de seguridad y cuenta</div>
       </div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Usuario conectado</div>
-      <div id="config-email-display" style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--text);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Rol</div>
-      <div id="config-rol-display" style="font-size:0.85rem;font-weight:600;color:var(--gold);margin-bottom:1rem;padding:0.6rem 0.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)"></div>
-      <button class="btn-secondary" onclick="cerrarSesion()" style="width:100%">Cerrar sesión</button>
-    </div>
 
-    <div class="card" style="margin-bottom:1rem">
-      <div class="card-row" style="margin-bottom:0.75rem">
-        <div class="card-name">Copia de seguridad</div>
+      <!-- Mi cuenta -->
+      <div class="card">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);font-weight:600;margin-bottom:0.75rem">Mi cuenta</div>
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+          <div style="flex:1">
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.2rem">Usuario</div>
+            <div id="config-email-display" style="font-family:'DM Mono',monospace;font-size:0.82rem;color:var(--text)"></div>
+          </div>
+          <div id="config-rol-display" style="font-size:0.78rem;font-weight:700;color:var(--gold);background:rgba(193,158,90,0.12);border:1px solid rgba(193,158,90,0.25);border-radius:6px;padding:0.3rem 0.65rem;white-space:nowrap"></div>
+        </div>
+        <button class="btn-secondary" onclick="cerrarSesion()" style="width:100%;font-size:0.82rem">Cerrar sesión</button>
       </div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
-        Guarda todos los datos en Google Drive. El archivo se llama <span style="font-family:'DM Mono',monospace">luma_backup.json</span> y se sobreescribe en cada backup.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:0.75rem">
-        <button class="btn-primary" onclick="hacerBackup()" id="btn-backup">&#9729; Hacer backup ahora</button>
-        <button class="btn-secondary" onclick="restaurarBackup()" id="btn-restore">&#8617; Restaurar última copia</button>
-      </div>
-      <div id="backup-status" style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);text-align:center;min-height:1.2em"></div>
-    </div>
 
-    <div id="config-usuarios-section" class="card" style="display:none">
-      <div class="card-row" style="margin-bottom:0.75rem">
-        <div class="card-name">Usuarios</div>
+      <!-- Copia de seguridad -->
+      <div class="card">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);font-weight:600;margin-bottom:0.75rem">Copia de seguridad</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5;background:var(--surface2);border-radius:8px;padding:0.65rem 0.75rem">
+          Guarda todos los datos en Google Drive. El archivo <span style="font-family:'DM Mono',monospace;color:var(--text)">luma_backup.json</span> se sobreescribe en cada backup.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.6rem">
+          <button class="btn-primary" onclick="hacerBackup()" id="btn-backup">☁ Hacer backup ahora</button>
+          <button class="btn-secondary" onclick="restaurarBackup()" id="btn-restore">↩ Restaurar última copia</button>
+        </div>
+        <div id="backup-status" style="margin-top:0.65rem;font-size:0.78rem;color:var(--text-muted);text-align:center;min-height:1.2em"></div>
       </div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
-        Los usuarios se crean desde el panel de Supabase. Aquí podés ver los perfiles registrados.
+
+      <!-- Usuarios (solo admin) -->
+      <div id="config-usuarios-section" class="card" style="display:none">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);font-weight:600;margin-bottom:0.75rem">Usuarios del sistema</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem;line-height:1.5">
+          Los usuarios se gestionan desde el panel de Supabase. Perfiles registrados:
+        </div>
+        <div id="config-usuarios-list" style="display:flex;flex-direction:column;gap:0.5rem"></div>
       </div>
-      <div id="config-usuarios-list" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+
     </div>
   </div>
 
@@ -1385,7 +1393,7 @@
       <span class="nav-icon">⊕</span>Cierre
     </button>
     <button class="nav-btn" id="nav-config" onclick="showView('config',this); cargarSeccionConfig()">
-      <span class="nav-icon">⚙</span>Config
+      <span class="nav-icon">☁</span>Backup
     </button>
   </nav>
 </div>
@@ -1835,15 +1843,15 @@ async function cargarProfesionales() {
               </span>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
             ${p.telefono ? `<a href="https://wa.me/54${p.telefono.replace(/[^0-9]/g,'')}" target="_blank"
-              style="background:#25D366;color:white;border:none;border-radius:6px;padding:0.3rem 0.6rem;font-size:0.72rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:0.3rem">${waSvg} WA</a>` : ''}
+              style="background:#25D366;color:white;border:none;border-radius:8px;padding:0.4rem 0.75rem;font-size:0.78rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:0.35rem">${waSvg} WhatsApp</a>` : ''}
             <button onclick="verResumenMedico(${p.ID_Profesional})"
-              style="background:rgba(90,158,122,0.15);border:1px solid rgba(90,158,122,0.3);border-radius:6px;padding:0.3rem 0.55rem;cursor:pointer;font-size:0.75rem;color:var(--green)">📊</button>
+              style="background:rgba(90,158,122,0.15);border:1px solid rgba(90,158,122,0.3);border-radius:8px;padding:0.4rem 0.75rem;cursor:pointer;font-size:0.78rem;font-weight:600;color:var(--green);display:flex;align-items:center;gap:0.35rem">📊 Resumen</button>
             <button onclick="editarProfesional(${p.ID_Profesional})"
-              style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.3rem 0.55rem;cursor:pointer;font-size:0.75rem;color:var(--text-muted)">✏</button>
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.75rem;cursor:pointer;font-size:0.78rem;font-weight:600;color:var(--text-muted);display:flex;align-items:center;gap:0.35rem">✏ Editar</button>
             <button onclick="eliminarProfesional(${p.ID_Profesional})"
-              style="background:rgba(201,85,74,0.1);border:1px solid rgba(201,85,74,0.3);border-radius:6px;padding:0.3rem 0.55rem;cursor:pointer;font-size:0.75rem;color:var(--red)">✕</button>
+              style="background:rgba(201,85,74,0.1);border:1px solid rgba(201,85,74,0.3);border-radius:8px;padding:0.4rem 0.75rem;cursor:pointer;font-size:0.78rem;font-weight:600;color:var(--red);display:flex;align-items:center;gap:0.35rem">✕ Eliminar</button>
           </div>
         </div>
 
@@ -2586,7 +2594,8 @@ async function cargarGrilla() {
             nombre_medico: profMap[h.ID_Profesional] || '?',
             id_profesional: h.ID_Profesional,
             hora_inicio: h.Hora_inicio,
-            hora_fin: h.Hora_fin
+            hora_fin: h.Hora_fin,
+            mes_inicio: h.Mes_inicio || null
           };
         }
       });
@@ -3407,35 +3416,28 @@ async function cargarConsultorios() {
 
       return `
       <div class="card" style="margin-bottom:0.75rem" id="consul-card-${c.id_consultorio}">
-        <!-- Header: nombre + precio -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-          <div style="font-weight:700;font-size:1rem;text-transform:capitalize">${c.nombreconsultorio}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;
-                      color:${precio > 0 ? 'var(--text)' : 'var(--text-dim)'}">
-            ${precio > 0 ? '$'+fmt(precio) : '$0'}
-          </div>
+        <!-- Header -->
+        <div class="card-row" style="margin-bottom:0.6rem">
+          <div class="card-name" style="text-transform:capitalize">${c.nombreconsultorio}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.88rem;font-weight:700;
+                      color:${precio > 0 ? 'var(--text)' : 'var(--text-dim)'}">$${fmt(precio)}</div>
         </div>
 
-        <!-- Precio editable + barra de ocupación -->
-        <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.75rem">
-          <div style="min-width:140px">
-            <label style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:0.2rem">Precio módulo</label>
-            <div style="display:flex;gap:0.3rem">
-              <input type="number" id="consul-precio-${c.id_consultorio}"
-                value="${precio}" min="0" step="1000"
-                class="form-input" style="margin:0;padding:0.4rem 0.5rem;width:90px;font-size:0.82rem">
-              <button onclick="guardarPrecioConsultorio(${c.id_consultorio})"
-                style="background:var(--gold);color:var(--surface);border:none;border-radius:6px;
-                       padding:0.4rem 0.6rem;cursor:pointer;font-weight:600;font-size:0.75rem;
-                       flex-shrink:0">✓</button>
-            </div>
+        <!-- Precio editable + barra -->
+        <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.65rem">
+          <div style="display:flex;gap:0.3rem;align-items:center">
+            <input type="number" id="consul-precio-${c.id_consultorio}"
+              value="${precio}" min="0" step="1000"
+              class="form-input" style="margin:0;padding:0.35rem 0.45rem;width:100px;font-size:0.8rem">
+            <button onclick="guardarPrecioConsultorio(${c.id_consultorio})"
+              style="background:var(--gold);color:var(--surface);border:none;border-radius:6px;
+                     padding:0.35rem 0.55rem;cursor:pointer;font-weight:700;font-size:0.8rem;flex-shrink:0">✓</button>
           </div>
           <div style="flex:1">
-            <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-muted);margin-bottom:0.3rem">
-              <span>Ocupación semanal</span>
-              <span>${pctOcup}% · ${ocupados} de ${totalSlots} turnos</span>
+            <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--text-muted);margin-bottom:0.25rem">
+              <span>Ocupación</span><span>${pctOcup}% · ${ocupados}/${totalSlots}</span>
             </div>
-            <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+            <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden">
               <div style="background:${pctOcup > 70 ? 'var(--red)' : pctOcup > 40 ? 'var(--gold)' : 'var(--green)'};
                           height:100%;width:${pctOcup}%;border-radius:4px;transition:width 0.3s"></div>
             </div>
@@ -3444,14 +3446,14 @@ async function cargarConsultorios() {
 
         <!-- Ocupados -->
         ${detalleHTML ? `
-        <div style="font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.3rem">Ocupados</div>
-        <div style="border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;margin-bottom:0.5rem">
+        <div style="font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.25rem">Ocupados</div>
+        <div style="border:1px solid var(--border);border-radius:6px;padding:0.35rem 0.55rem;margin-bottom:0.45rem">
           ${detalleHTML}
         </div>` : ''}
 
-        <!-- Libres -->
+        <!-- Disponibles -->
         ${libresHTML ? `
-        <div style="font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.3rem">Disponibles</div>
+        <div style="font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.25rem">Disponibles</div>
         <div style="display:flex;flex-wrap:wrap">${libresHTML}</div>
         ` : '<div style="font-size:0.72rem;color:var(--red);font-weight:600">Consultorio completo</div>'}
       </div>`;
@@ -3586,6 +3588,13 @@ async function generarVistaPrevia() {
           const dur = (hh2+mm2/60)-(hh+mm/60);
           const fraccion = dur / 4;
 
+          // Filtrar por Mes_inicio del horario — si el horario aún no arrancó, no se factura
+          if (asig.mes_inicio) {
+            const inicioHorario = new Date(asig.mes_inicio + 'T12:00:00');
+            const inicioMesHorario = new Date(inicioHorario.getFullYear(), inicioHorario.getMonth(), 1);
+            if (fechaMes < inicioMesHorario) return;
+          }
+
           const consulKey = consul.toLowerCase().trim().replace(/\s+/g, ' ');
           let precioBase = preciosPorConsul[consulKey];
           if (precioBase === undefined) {
@@ -3611,15 +3620,10 @@ async function generarVistaPrevia() {
     return {
       id_profesional: id, nombre: p.Nombre_Medico,
       turnos: dat.turnos, modulos: dat.turnos,
-      monto: Math.round(dat.monto), mes_inicio: p.mes_inicio || null
+      monto: Math.round(dat.monto)
     };
   }).filter(d => {
     if (!d.turnos) return false;
-    if (d.mes_inicio) {
-      const inicio = new Date(d.mes_inicio + 'T12:00:00');
-      const inicioMes = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
-      if (fechaMes < inicioMes) return false;
-    }
     return true;
   });
 
@@ -4018,8 +4022,6 @@ window.onload = async () => {
       });
 
       if (res.ok) {
-        const userData = await res.json();
-        currentUser = userData; // usar el usuario real verificado por Supabase
         const email = currentUser?.email || '';
         await cargarRolUsuario(email);
         document.getElementById('status-text').textContent = email.split('@')[0];

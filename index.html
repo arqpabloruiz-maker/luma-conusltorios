@@ -3708,9 +3708,10 @@ async function confirmarCierre() {
   if (!cierreDatos.length) { showToast('Generá la vista previa primero', 'error'); return; }
   const mes  = document.getElementById('cierre-mes').value;
   const anio = document.getElementById('cierre-anio').value;
-  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
+  const mesLabel = mes.toLowerCase() + ' ' + anio;
+  const mesLabelDisplay = mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
 
-  if (!confirm(`¿Confirmar cierre de ${mesLabel}? Se generará la deuda para ${cierreDatos.length} profesionales.`)) return;
+  if (!confirm(`¿Confirmar cierre de ${mesLabelDisplay}? Se generará la deuda para ${cierreDatos.length} profesionales.`)) return;
 
   let ok = 0, errores = 0;
   for (const d of cierreDatos) {
@@ -3751,7 +3752,7 @@ async function confirmarCierre() {
   }
 
   if (errores === 0) {
-    showToast(`Cierre ${mesLabel} generado ✓ (${ok} profesionales)`, 'success');
+    showToast(`Cierre ${mesLabelDisplay} generado ✓ (${ok} profesionales)`, 'success');
   } else {
     showToast(`${ok} OK, ${errores} errores`, 'error');
   }
@@ -3775,7 +3776,7 @@ async function cargarFacturacionMes(mes, anio) {
   if (!listaEl) return;
   listaEl.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando…</div>';
 
-  const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
+  const mesLabel = mes.toLowerCase() + ' ' + anio;
 
   try {
     const [registros, pagosDelMes] = await Promise.all([

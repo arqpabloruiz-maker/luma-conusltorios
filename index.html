@@ -1630,7 +1630,7 @@ async function obtenerTokenGoogle() {
     if (googleAccessToken) { resolve(googleAccessToken); return; }
     const client = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive.file',
+      scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
       callback: (resp) => {
         if (resp.error) { reject(new Error(resp.error)); return; }
         googleAccessToken = resp.access_token;

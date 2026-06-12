@@ -295,6 +295,40 @@
   }
 
   /* Print styles */
+  /* Modal de opciones de impresión */
+  #print-modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
+    z-index:9999; align-items:center; justify-content:center;
+  }
+  #print-modal-overlay.open { display:flex; }
+  #print-modal {
+    background:var(--surface); border-radius:14px; padding:1.6rem;
+    width:min(92vw, 360px); box-shadow:0 8px 32px rgba(0,0,0,0.22);
+    border:1px solid var(--border);
+  }
+  #print-modal h3 {
+    margin:0 0 1.1rem 0; font-size:1.1rem; font-weight:700; color:var(--text);
+    display:flex; align-items:center; gap:0.5rem;
+  }
+  .pm-group { margin-bottom:1rem; }
+  .pm-label { font-size:0.72rem; font-weight:700; letter-spacing:0.07em;
+    text-transform:uppercase; color:var(--text-muted); margin-bottom:0.45rem; }
+  .pm-options { display:flex; gap:0.5rem; flex-wrap:wrap; }
+  .pm-opt {
+    flex:1; min-width:70px; padding:0.45rem 0.5rem; border-radius:8px;
+    border:1.5px solid var(--border); background:var(--surface2);
+    color:var(--text); font-size:0.82rem; font-weight:500; cursor:pointer;
+    text-align:center; transition:all 0.15s; user-select:none;
+  }
+  .pm-opt:hover { border-color:var(--gold); color:var(--gold); }
+  .pm-opt.selected { border-color:var(--gold); background:rgba(var(--gold-rgb,180,120,80),0.12); color:var(--gold); font-weight:700; }
+  .pm-actions { display:flex; gap:0.7rem; margin-top:1.3rem; }
+  .pm-actions button { flex:1; padding:0.6rem; border-radius:8px; border:none;
+    font-size:0.9rem; font-weight:600; cursor:pointer; transition:opacity 0.15s; }
+  .pm-btn-cancel { background:var(--surface2); color:var(--text-muted); }
+  .pm-btn-print { background:var(--gold); color:white; }
+  .pm-btn-print:hover, .pm-btn-cancel:hover { opacity:0.85; }
+
   @media print {
     @page { size: A4 portrait; margin: 1cm; }
     body { background: white !important; font-size: 13pt !important; }
@@ -1418,7 +1452,7 @@
 
         <!-- Gráfico: Módulos ocupados vs libres -->
         <div class="card" style="margin-bottom:0.75rem">
-          <div style="font-size:0.62rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.85rem">Ocupación de módulos · <span style="color:var(--text-dim);font-weight:400;text-transform:none">máx ${TOTAL_MODULOS ?? 11} por consultorio</span></div>
+          <div style="font-size:0.62rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.85rem">Ocupación de módulos · <span id="stats-total-modulos-label" style="color:var(--text-dim);font-weight:400;text-transform:none">máx 11 por consultorio</span></div>
           <div id="stats-chart-modulos" style="display:flex;flex-direction:column;gap:0.45rem"></div>
         </div>
 
@@ -4175,7 +4209,32 @@ async function cargarEstadisticas() {
       const precio = parseFloat(c.precio_modulo) || 0;
       const ocupados = modulosPorConsul[key] || 0;
       const libres = Math.max(0, TOTAL_MODULOS - ocupados);
-      const ingreso = precio * ocupados;
+
+      // Calcular ingreso real considerando descuentos por profesional
+      // grillaDatos usa keys en minúsculas (ej: 'consul 1'), Supabase puede devolver 'Consul 1'
+      const consulKey = (c.nombreconsultorio || '').toLowerCase().trim().replace(/\s+/g,' ');
+      // Encontrar la key exacta que usa grillaDatos (por si hay variación de capitalización)
+      const consulGrillaKey = CONSULTORIOS.find(k => k.toLowerCase().trim() === consulKey) || c.nombreconsultorio;
+      let ingreso = 0;
+      if (Object.keys(grillaDatos).length) {
+        const vistos = new Set();
+        Object.entries(MODULOS_POR_DIA).forEach(([dia, maxTurnos]) => {
+          const turnosValidos = maxTurnos === 1 ? ['Mañana'] : ['Mañana','Tarde'];
+          turnosValidos.forEach(turno => {
+            const bloquesDelTurno = BLOQUES.filter(b => b.turno === turno);
+            const asig = bloquesDelTurno.map(b => grillaDatos[dia]?.[b.key]?.[consulGrillaKey]).find(a => a);
+            if (!asig) return;
+            const hkey = (asig.id_horario || asig.ID_Horario || '') + dia + turno + consulGrillaKey;
+            if (vistos.has(hkey)) return;
+            vistos.add(hkey);
+            const idProf = asig.id_profesional || asig.ID_Profesional;
+            const profObj = profesionales.find(p => p.ID_Profesional === idProf || p.id_profesional === idProf);
+            const descuento = parseFloat(profObj?.descuento_modulo) || 0;
+            ingreso += Math.max(0, precio - descuento);
+          });
+        });
+      }
+
       const proyAnual = ingreso * 12;
       return { nombre: c.nombreconsultorio, precio, ocupados, libres, ingreso, proyAnual };
     });
@@ -4186,6 +4245,10 @@ async function cargarEstadisticas() {
     const totalProyAnual = totalIngreso * 12;
     const totalOcupados  = datos.reduce((s, d) => s + d.ocupados, 0);
     const totalLibres    = datos.reduce((s, d) => s + d.libres, 0);
+
+    // Actualizar label del gráfico
+    const labelEl = document.getElementById('stats-total-modulos-label');
+    if (labelEl) labelEl.textContent = `máx ${TOTAL_MODULOS ?? 11} por consultorio`;
 
     // ── Tabla ──
     let html = '';
@@ -4250,16 +4313,112 @@ async function cargarEstadisticas() {
 }
 
 // ── IMPRIMIR VISTA ──
+// ── MODAL DE IMPRESIÓN ──
+let _printStyleTag = null;
+
 function imprimirVista(nombre) {
-  // Quitar print-target previo
+  // Marcar sección a imprimir
   document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
   const target = document.getElementById('view-' + nombre);
   if (target) target.classList.add('print-target');
-  window.print();
-  setTimeout(() => {
-    document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
-  }, 1000);
+  // Abrir modal
+  document.getElementById('print-modal-overlay').classList.add('open');
 }
+
+function cerrarModalImpresion() {
+  document.getElementById('print-modal-overlay').classList.remove('open');
+  document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
+}
+
+function getSelected(groupId) {
+  return document.querySelector(`#${groupId} .pm-opt.selected`)?.dataset.val;
+}
+
+function ejecutarImpresion() {
+  const orientacion = getSelected('pm-orientacion') || 'portrait';
+  const papel       = getSelected('pm-papel')       || 'A4';
+  const margen      = getSelected('pm-margenes')    || '1cm';
+  const escalaVal   = getSelected('pm-escala')      || '0.85';
+
+  // Dimensiones en mm de cada papel
+  const papelDims = { A4:[210,297], letter:[216,279], A3:[297,420] };
+  const [pw, ph] = papelDims[papel] || [210,297];
+  const [pageW_mm, pageH_mm] = orientacion === 'landscape' ? [ph, pw] : [pw, ph];
+
+  // Margen en mm
+  const margenMm = parseFloat(margen) * (margen.includes('cm') ? 10 : 1);
+  const availW_mm = pageW_mm - margenMm * 2;
+  const availH_mm = pageH_mm - margenMm * 2;
+
+  let zoomExtra = '';
+
+  if (escalaVal === 'fit') {
+    // Medir el contenido de la sección activa
+    const target = document.querySelector('.print-target');
+    if (target) {
+      const mmToPx = 96 / 25.4; // px por mm a 96dpi
+      const availW_px = availW_mm * mmToPx;
+      const availH_px = availH_mm * mmToPx;
+      const contentW = target.scrollWidth;
+      const contentH = target.scrollHeight;
+      const scaleW = availW_px / contentW;
+      const scaleH = availH_px / contentH;
+      const zoom = Math.min(scaleW, scaleH, 1).toFixed(4);
+      zoomExtra = `
+        .print-target { zoom: ${zoom} !important; }
+        .grilla-wrap { overflow: visible !important; }
+      `;
+    }
+  }
+
+  let escala, ancho;
+  if (escalaVal === 'fit') {
+    escala = 1; ancho = 100;
+  } else {
+    escala = parseFloat(escalaVal);
+    ancho = Math.round(100 / escala);
+  }
+
+  // Inyectar @page dinámico
+  if (_printStyleTag) _printStyleTag.remove();
+  _printStyleTag = document.createElement('style');
+  _printStyleTag.id = 'print-dynamic';
+  _printStyleTag.textContent = `
+    @media print {
+      @page { size: ${papel} ${orientacion}; margin: ${margen}; }
+      .app-content {
+        transform: scale(${escala.toFixed(3)}) !important;
+        width: ${ancho}% !important;
+      }
+      ${zoomExtra}
+    }
+  `;
+  document.head.appendChild(_printStyleTag);
+
+  document.getElementById('print-modal-overlay').classList.remove('open');
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
+    }, 1000);
+  }, 150);
+}
+
+// Lógica de selección de opciones del modal
+document.addEventListener('DOMContentLoaded', () => {
+  ['pm-orientacion','pm-papel','pm-margenes','pm-escala'].forEach(groupId => {
+    document.getElementById(groupId)?.addEventListener('click', e => {
+      const opt = e.target.closest('.pm-opt');
+      if (!opt) return;
+      document.querySelectorAll(`#${groupId} .pm-opt`).forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    });
+  });
+  // Cerrar con click fuera del modal
+  document.getElementById('print-modal-overlay')?.addEventListener('click', e => {
+    if (e.target.id === 'print-modal-overlay') cerrarModalImpresion();
+  });
+});
 
 // ── UI HELPERS ──
 function showView(name, btn) {
@@ -4407,5 +4566,53 @@ window.onload = async () => {
   document.getElementById('config-screen').style.display = 'flex';
 };
 </script>
+<!-- Modal opciones de impresión -->
+<div id="print-modal-overlay">
+  <div id="print-modal">
+    <h3>🖨 Opciones de impresión</h3>
+
+    <div class="pm-group">
+      <div class="pm-label">Orientación</div>
+      <div class="pm-options" id="pm-orientacion">
+        <div class="pm-opt selected" data-val="portrait">▯ Vertical</div>
+        <div class="pm-opt" data-val="landscape">▭ Horizontal</div>
+      </div>
+    </div>
+
+    <div class="pm-group">
+      <div class="pm-label">Tamaño de papel</div>
+      <div class="pm-options" id="pm-papel">
+        <div class="pm-opt selected" data-val="A4">A4</div>
+        <div class="pm-opt" data-val="letter">Carta</div>
+        <div class="pm-opt" data-val="A3">A3</div>
+      </div>
+    </div>
+
+    <div class="pm-group">
+      <div class="pm-label">Márgenes</div>
+      <div class="pm-options" id="pm-margenes">
+        <div class="pm-opt" data-val="0.5cm">Mínimo</div>
+        <div class="pm-opt selected" data-val="1cm">Normal</div>
+        <div class="pm-opt" data-val="2cm">Amplio</div>
+      </div>
+    </div>
+
+    <div class="pm-group">
+      <div class="pm-label">Escala de contenido</div>
+      <div class="pm-options" id="pm-escala">
+        <div class="pm-opt" data-val="fit">Una hoja</div>
+        <div class="pm-opt" data-val="1">100%</div>
+        <div class="pm-opt selected" data-val="0.85">85%</div>
+        <div class="pm-opt" data-val="0.75">75%</div>
+        <div class="pm-opt" data-val="0.65">65%</div>
+      </div>
+    </div>
+
+    <div class="pm-actions">
+      <button class="pm-btn-cancel" onclick="cerrarModalImpresion()">Cancelar</button>
+      <button class="pm-btn-print" onclick="ejecutarImpresion()">Imprimir</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

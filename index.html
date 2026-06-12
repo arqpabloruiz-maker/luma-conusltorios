@@ -1928,8 +1928,33 @@ async function iniciarApp() {
   await cargarProfesionales();
   await cargarHorarios();
   await cargarPagos();
+  await cargarNombresConsultorios(); // carga nombres reales para FK
   await cargarGrilla();
   renderGrilla(); // grilla es la vista inicial
+}
+
+// ── NOMBRES REALES DE CONSULTORIOS (para FK en horariosfijos) ──
+// Mapea 'consul 1' → nombre exacto en DB (ej. 'Consul 1')
+let consultorioNombresMap = {}; // { 'consul 1': 'Consul 1', ... }
+
+async function cargarNombresConsultorios() {
+  try {
+    const rows = await sbFetch('consultorios', {
+      select: 'nombreconsultorio', limit: 50
+    });
+    rows.forEach(r => {
+      const key = (r.nombreconsultorio || '').toLowerCase().trim().replace(/\s+/g,' ');
+      consultorioNombresMap[key] = r.nombreconsultorio;
+    });
+  } catch(e) {
+    console.warn('[LUMA] No se pudieron cargar nombres de consultorios:', e.message);
+  }
+}
+
+// Devuelve el nombre exacto de DB para un consul key ('consul 1' → 'Consul 1')
+function nombreConsulDB(consulKey) {
+  const k = (consulKey || '').toLowerCase().trim().replace(/\s+/g,' ');
+  return consultorioNombresMap[k] || consulKey; // fallback al original
 }
 
 // ── DASHBOARD ──
@@ -2310,7 +2335,7 @@ async function guardarHorario() {
       method: 'POST',
       body: {
         ID_Profesional: parseInt(idProf),
-        nombreConsultorio: consul,
+        nombreConsultorio: nombreConsulDB(consul),
         Dia_Semana: dia,
         Hora_inicio: inicio,
         Hora_fin: fin,
@@ -3105,7 +3130,7 @@ async function confirmarAsignacion() {
         if (idProf && hi && hf) {
           if (hi >= hf) { showToast('La hora de fin debe ser mayor al inicio', 'error'); return; }
           await sbFetch('horariosfijos', { method: 'POST', body: {
-            ID_Profesional: idProf, nombreConsultorio: consul, Dia_Semana: dia,
+            ID_Profesional: idProf, nombreConsultorio: nombreConsulDB(consul), Dia_Semana: dia,
             Hora_inicio: hi, Hora_fin: hf,
             Mes_inicio: new Date().toISOString().substring(0,7)+'-01'
           }});
@@ -3127,7 +3152,7 @@ async function confirmarAsignacion() {
       }
       if (idProf) {
         await sbFetch('horariosfijos', { method: 'POST', body: {
-          ID_Profesional: idProf, nombreConsultorio: consul, Dia_Semana: dia,
+          ID_Profesional: idProf, nombreConsultorio: nombreConsulDB(consul), Dia_Semana: dia,
           Hora_inicio: b1.hi, Hora_fin: b2.hf,
           Mes_inicio: new Date().toISOString().substring(0,7)+'-01'
         }});
@@ -3145,7 +3170,7 @@ async function confirmarAsignacion() {
         }
         if (idProf) {
           await sbFetch('horariosfijos', { method: 'POST', body: {
-            ID_Profesional: idProf, nombreConsultorio: consul, Dia_Semana: dia,
+            ID_Profesional: idProf, nombreConsultorio: nombreConsulDB(consul), Dia_Semana: dia,
             Hora_inicio: bloque.hi, Hora_fin: bloque.hf,
             Mes_inicio: new Date().toISOString().substring(0,7)+'-01'
           }});

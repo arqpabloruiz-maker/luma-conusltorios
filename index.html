@@ -234,14 +234,14 @@
   /* Main content */
   .app-content {
     flex: 1;
-    padding: 1.25rem 1rem 6rem;
+    padding: 1.25rem 1rem 8rem;
     max-width: 680px;
     margin: 0 auto;
     width: 100%;
   }
   .app-content.grilla-mode {
     max-width: 100%;
-    padding: 1.25rem 0.5rem 6rem;
+    padding: 1.25rem 0.5rem 8rem;
   }
 
   /* Section header */
@@ -250,13 +250,82 @@
     font-size: 1.6rem;
     color: var(--text);
     margin-bottom: 0.25rem;
+    text-align: center;
   }
 
   .section-sub {
     font-size: 0.8rem;
     color: var(--text-muted);
     margin-bottom: 1.5rem;
+    text-align: center;
   }
+
+  /* Header de sección con título centrado y botón imprimir a la derecha */
+  .section-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    margin-bottom: 0.25rem;
+  }
+  .section-header .section-title { margin-bottom: 0; grid-column: 2; }
+  .section-header .btn-print-view { grid-column: 3; justify-self: end; }
+
+  /* Botón imprimir por sección */
+  .btn-print-view {
+    background: rgba(184,134,11,0.12);
+    border: 1.5px solid rgba(184,134,11,0.5);
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    color: #8a6200;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+    transition: background var(--transition), border-color var(--transition);
+    white-space: nowrap;
+  }
+  .btn-print-view:hover {
+    background: rgba(184,134,11,0.22);
+    border-color: rgba(184,134,11,0.75);
+    color: #5a3f00;
+  }
+
+  /* Print styles */
+  @media print {
+    @page { size: A4 portrait; margin: 1cm; }
+    body { background: white !important; font-size: 13pt !important; }
+    .app-nav, header, .btn-print-view, .tab-bar, .btn-submit,
+    .btn-icon, #nav-config { display: none !important; }
+    .view { display: none !important; }
+    .view.print-target { display: block !important; }
+    .app-content {
+      padding: 0 !important;
+      max-width: 100% !important;
+      transform-origin: top left;
+      transform: scale(0.85);
+      width: 117% !important;
+    }
+    .card { break-inside: avoid; }
+    p, td, th, div, span, li { font-size: 12pt; }
+    .section-title { font-size: 1.6rem !important; }
+    :root {
+      --bg: white; --surface: white; --surface2: #f5f5f5;
+      --border: #ccc; --text: black; --text-muted: #555; --text-dim: #888;
+      --gold: #7a3a2f; --green: #2a6a4a; --red: #8a2a22;
+    }
+    .stats-bar-fill { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+
+  /* Stats bars */
+  .stats-bar-row { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.4rem; }
+  .stats-bar-label { font-size:0.78rem; color:var(--text-muted); width:70px; flex-shrink:0; text-align:right; }
+  .stats-bar-track { flex:1; background:var(--surface2); border-radius:6px; height:18px; overflow:hidden; position:relative; }
+  .stats-bar-fill { height:100%; border-radius:6px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+  .stats-bar-value { font-size:0.72rem; font-family:'DM Mono',monospace; color:var(--text-muted); width:80px; flex-shrink:0; }
 
   /* Cards */
   .card {
@@ -558,7 +627,7 @@
     width: 100%;
     min-width: 520px;
     border-collapse: collapse;
-    font-size: 0.75rem;
+    font-size: 0.83rem;
     table-layout: fixed;
   }
 
@@ -566,7 +635,7 @@
     background: var(--surface2);
     color: #7a2e24;
     font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 0.5rem 0.25rem;
@@ -614,14 +683,14 @@
 
   .grilla-dia {
     font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     color: var(--gold);
     font-weight: 500;
     letter-spacing: 0.06em;
   }
 
   .grilla-turno {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     color: var(--text-dim);
     margin-top: 0.1rem;
   }
@@ -691,7 +760,7 @@
   }
 
   .grilla-cell-nombre {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
     font-weight: 700;
     color: #5a1e14;
     line-height: 1.2;
@@ -700,7 +769,7 @@
   }
 
   .grilla-cell-libre {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 600;
     color: #1a6640;
     text-shadow: 0 1px 0 rgba(255,255,255,0.5);
@@ -935,7 +1004,10 @@
   <main class="app-content grilla-mode">
     <!-- DASHBOARD -->
     <div id="view-dashboard" class="view">
-      <div class="section-title">Tablero</div>
+      <div class="section-header">
+        <div class="section-title">Tablero</div>
+        <button class="btn-print-view" onclick="imprimirVista('dashboard')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
       <div class="section-sub" id="dashboard-fecha">—</div>
       <div class="summary-grid" id="summary-grid">
         <div class="loading"><div class="spinner"></div>Cargando…</div>
@@ -948,7 +1020,10 @@
 
     <!-- PROFESIONALES -->
     <div id="view-profesionales" class="view">
-      <div class="section-title">Profesionales</div>
+      <div class="section-header">
+        <div class="section-title">Profesionales</div>
+        <button class="btn-print-view" onclick="imprimirVista('profesionales')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
       <div class="section-sub">Médicos registrados</div>
 
       <div class="tab-bar">
@@ -986,7 +1061,10 @@
 
     <!-- HORARIOS -->
     <div id="view-horarios" class="view">
-      <div class="section-title">Horarios</div>
+      <div class="section-header">
+        <div class="section-title">Horarios</div>
+        <button class="btn-print-view" onclick="imprimirVista('horarios')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
       <div class="section-sub">Asignación de consultorios</div>
 
       <div class="tab-bar">
@@ -1044,7 +1122,10 @@
 
     <!-- PAGOS -->
     <div id="view-pagos" class="view">
-      <div class="section-title">Pagos</div>
+      <div class="section-header">
+        <div class="section-title">Pagos</div>
+        <button class="btn-print-view" onclick="imprimirVista('pagos')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
       <div class="section-sub">Registrá un cobro o consultá la deuda por profesional</div>
 
       <!-- Selector de profesional principal -->
@@ -1114,9 +1195,13 @@
     </div>
     <!-- GRILLA -->
     <div id="view-grilla" class="view active">
-      <div style="padding:0 0.5rem">
-        <div class="section-title">Grilla Semanal</div>
-        <div class="section-sub">Consultorios · Mañana 8–12 / Tarde 14–18 · Tocá una celda para asignar</div>
+      <div class="section-header" style="padding:0 0.5rem">
+        <div></div>
+        <div style="text-align:center">
+          <div class="section-title">Grilla Semanal</div>
+          <div class="section-sub">Consultorios · Mañana 8–12 / Tarde 14–18 · Tocá una celda para asignar</div>
+        </div>
+        <button class="btn-print-view" onclick="imprimirVista('grilla')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
       </div>
       <div class="grilla-view-wrap">
         <table class="grilla-table" id="grilla-tabla" style="width:100%;min-width:600px">
@@ -1140,7 +1225,10 @@
 
     <!-- DEUDA GLOBAL -->
     <div id="view-deuda" class="view">
-      <div class="section-title">Deuda a la fecha</div>
+      <div class="section-header">
+        <div class="section-title">Deuda a la fecha</div>
+        <button class="btn-print-view" onclick="imprimirVista('deuda')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
       <div class="section-sub" id="deuda-fecha-sub">—</div>
 
       <div style="overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:1rem">
@@ -1166,7 +1254,10 @@
 
     <!-- CIERRE MENSUAL -->
     <div id="view-cierre" class="view">
-      <div class="section-title">Facturación Mensual</div>
+      <div class="section-header">
+        <div class="section-title">Facturación Mensual</div>
+        <button class="btn-print-view" onclick="imprimirVista('cierre')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
       <div class="section-sub">Generá o editá la deuda del mes — se cobra adelantado</div>
 
       <!-- Tabs: Nuevo cierre / Editar existente -->
@@ -1267,11 +1358,13 @@
       </div>
     </div>
 
-  </main>
 
     <!-- CONSULTORIOS -->
     <div id="view-consultorios" class="view">
-      <div class="section-title">Consultorios</div>
+      <div class="section-header">
+        <div class="section-title">Consultorios</div>
+        <button class="btn-print-view" onclick="imprimirVista('consultorios')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
       <div class="section-sub">Precios de módulo por consultorio · Los cambios aplican a cierres futuros</div>
 
       <div style="max-width:480px;margin:0 auto">
@@ -1287,7 +1380,50 @@
       </div>
     </div>
 
-  </main>
+    <!-- ESTADÍSTICAS -->
+    <div id="view-estadisticas" class="view">
+      <div class="section-header">
+        <div class="section-title">Estadísticas</div>
+        <button class="btn-print-view" onclick="imprimirVista('estadisticas')" title="Imprimir / Exportar PDF">🖨 Imprimir</button>
+      </div>
+      <div class="section-sub" id="stats-fecha-sub">—</div>
+
+      <div style="max-width:480px;margin:0 auto">
+
+        <!-- Tabla resumen -->
+        <div style="overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:1.25rem">
+          <table id="stats-tabla" style="width:100%;border-collapse:collapse;font-size:0.88rem">
+            <thead>
+              <tr style="background:var(--surface2)">
+                <th style="padding:0.55rem 0.8rem;text-align:left;color:var(--text-muted);font-weight:500;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Consultorio</th>
+                <th style="padding:0.55rem 0.8rem;text-align:right;color:var(--text-muted);font-weight:500;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Ingreso</th>
+                <th style="padding:0.55rem 0.8rem;text-align:right;color:var(--text-muted);font-weight:500;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Proy. Anual</th>
+                <th style="padding:0.55rem 0.8rem;text-align:center;color:var(--text-muted);font-weight:500;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Ocup.</th>
+                <th style="padding:0.55rem 0.8rem;text-align:center;color:var(--text-muted);font-weight:500;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)">Libre</th>
+              </tr>
+            </thead>
+            <tbody id="stats-tbody">
+              <tr><td colspan="5"><div class="loading"><div class="spinner"></div>Calculando…</div></td></tr>
+            </tbody>
+            <tfoot id="stats-tfoot"></tfoot>
+          </table>
+        </div>
+
+        <!-- Proyección anual total -->
+        <div class="card" style="background:linear-gradient(135deg,var(--surface),var(--surface2));margin-bottom:0.75rem">
+          <div style="font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:0.4rem">Proyección anual total</div>
+          <div id="stats-proyeccion" style="font-family:'DM Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--gold)">—</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.2rem">Ingresos del mes × 12</div>
+        </div>
+
+        <!-- Gráfico: Módulos ocupados vs libres -->
+        <div class="card" style="margin-bottom:0.75rem">
+          <div style="font-size:0.62rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.85rem">Ocupación de módulos · <span style="color:var(--text-dim);font-weight:400;text-transform:none">máx ${TOTAL_MODULOS ?? 11} por consultorio</span></div>
+          <div id="stats-chart-modulos" style="display:flex;flex-direction:column;gap:0.45rem"></div>
+        </div>
+
+      </div>
+    </div>
 
 
   <!-- VIEW CONFIG -->
@@ -1381,6 +1517,8 @@
     </div>
   </div>
 
+  </main>
+
   <!-- BOTTOM NAV -->
   <nav class="app-nav">
     <button class="nav-btn active" onclick="showView('grilla',this); renderGrilla()">
@@ -1400,6 +1538,9 @@
     </button>
     <button class="nav-btn" onclick="showView('cierre',this); iniciarCierre()">
       <span class="nav-icon">⊕</span>Cierre
+    </button>
+    <button class="nav-btn" onclick="showView('estadisticas',this); cargarEstadisticas()">
+      <span class="nav-icon">📊</span>Stats
     </button>
     <button class="nav-btn" id="nav-config" onclick="showView('config',this); cargarSeccionConfig()">
       <span class="nav-icon">☁</span>Backup
@@ -2684,8 +2825,8 @@ function _renderGrillaHTML() {
           html += `<td style="padding:0"><div style="display:flex;flex-direction:column;height:58px">
             <div class="grilla-cell ${a1?'ocupado':'libre'}" style="flex:1;min-height:0;border-bottom:1px solid var(--border)"
                  onclick="abrirModal('${dia}','${b1.key}',null,'${consul}')">
-              ${a1 ? `<div class="grilla-cell-nombre" style="font-size:0.62rem">${a1.nombre_medico}</div>`
-                    : `<div class="grilla-cell-libre" style="font-size:0.58rem">${b1.hi}–${b1.hf}</div>`}
+              ${a1 ? `<div class="grilla-cell-nombre" style="font-size:0.7rem">${a1.nombre_medico}</div>`
+                    : `<div class="grilla-cell-libre" style="font-size:0.65rem">${b1.hi}–${b1.hf}</div>`}
             </div>
             <div class="grilla-cell ${a2?'ocupado':'libre'}" style="flex:1;min-height:0"
                  onclick="abrirModal('${dia}',null,'${b2.key}','${consul}')">
@@ -3450,9 +3591,9 @@ async function cargarConsultorios() {
         if (!tieneM) slots.push('8–12');
         if (!tieneT) slots.push('14–18');
         if (slots.length) {
-          libresHTML += `<span style="display:inline-block;background:rgba(90,158,122,0.12);
-            color:var(--green);border-radius:4px;padding:0.1rem 0.4rem;font-size:0.65rem;
-            margin:0.15rem 0.15rem 0 0">${dia.substring(0,3)} ${slots.join(' ')}</span>`;
+          libresHTML += `<span style="display:inline-block;background:rgba(90,158,122,0.28);
+            color:#2d7a52;border-radius:4px;padding:0.15rem 0.5rem;font-size:0.68rem;font-weight:600;
+            margin:0.15rem 0.15rem 0 0;border:1px solid rgba(90,158,122,0.4)">${dia.substring(0,3)} ${slots.join(' ')}</span>`;
         }
       });
 
@@ -3958,6 +4099,141 @@ async function borrarFacturacion(idLiq, nombre, mesLabel, pagado) {
     document.getElementById(`edit-reg-${idLiq}`)?.remove();
     await cargarDeudaGlobal();
   } catch(e) { showToast('Error al eliminar', 'error'); }
+}
+
+// ── ESTADÍSTICAS ──
+// Módulos por consultorio: Lun–Vie × 2 turnos + Sáb × 1 turno (solo mañana) = 11
+const MODULOS_POR_DIA = { Lunes:2, Martes:2, Miercoles:2, Jueves:2, Viernes:2, Sabado:1 };
+const TOTAL_MODULOS = Object.values(MODULOS_POR_DIA).reduce((s,v)=>s+v,0); // 11
+
+async function cargarEstadisticas() {
+  const sub = document.getElementById('stats-fecha-sub');
+  const hoy = new Date();
+  if (sub) sub.textContent = hoy.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const tbody = document.getElementById('stats-tbody');
+  const tfoot = document.getElementById('stats-tfoot');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5"><div class="loading"><div class="spinner"></div>Calculando…</div></td></tr>';
+
+  try {
+    const consultorios = await sbFetch('consultorios', {
+      select: 'id_consultorio,nombreconsultorio,precio_modulo',
+      order: 'id_consultorio.asc', limit: 50
+    });
+
+    if (!consultorios.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--text-dim)">Sin consultorios registrados</td></tr>';
+      return;
+    }
+
+    // Contar módulos ocupados por consultorio desde grillaDatos
+    // Sábado solo cuenta turno Mañana (=1 módulo); resto Mañana+Tarde (=2 módulos)
+    const modulosPorConsul = {};
+    CONSULTORIOS.forEach(c => { modulosPorConsul[c.toLowerCase()] = 0; });
+
+    if (Object.keys(grillaDatos).length) {
+      Object.entries(MODULOS_POR_DIA).forEach(([dia, maxTurnos]) => {
+        const turnosValidos = maxTurnos === 1 ? ['Mañana'] : ['Mañana','Tarde'];
+        CONSULTORIOS.forEach(consul => {
+          turnosValidos.forEach(turno => {
+            const bloquesDelTurno = BLOQUES.filter(b => b.turno === turno);
+            const ocupado = bloquesDelTurno.some(b => grillaDatos[dia]?.[b.key]?.[consul]);
+            if (ocupado) modulosPorConsul[consul.toLowerCase()] = (modulosPorConsul[consul.toLowerCase()]||0) + 1;
+          });
+        });
+      });
+    }
+
+    const datos = consultorios.map(c => {
+      const key = (c.nombreconsultorio || '').toLowerCase().trim().replace(/\s+/g,' ');
+      const precio = parseFloat(c.precio_modulo) || 0;
+      const ocupados = modulosPorConsul[key] || 0;
+      const libres = Math.max(0, TOTAL_MODULOS - ocupados);
+      const ingreso = precio * ocupados;
+      const proyAnual = ingreso * 12;
+      return { nombre: c.nombreconsultorio, precio, ocupados, libres, ingreso, proyAnual };
+    });
+
+    datos.sort((a, b) => b.ingreso - a.ingreso);
+
+    const totalIngreso   = datos.reduce((s, d) => s + d.ingreso, 0);
+    const totalProyAnual = totalIngreso * 12;
+    const totalOcupados  = datos.reduce((s, d) => s + d.ocupados, 0);
+    const totalLibres    = datos.reduce((s, d) => s + d.libres, 0);
+
+    // ── Tabla ──
+    let html = '';
+    datos.forEach((d, i) => {
+      const bg = i % 2 === 0 ? '' : 'background:var(--surface2)';
+      html += `<tr style="border-bottom:1px solid var(--border);${bg}">
+        <td style="padding:0.6rem 0.9rem;font-weight:500;text-transform:capitalize">${d.nombre}</td>
+        <td style="padding:0.6rem 0.9rem;text-align:right;font-family:'DM Mono',monospace;font-weight:600">$${fmt(d.ingreso)}</td>
+        <td style="padding:0.6rem 0.9rem;text-align:right;font-family:'DM Mono',monospace;color:var(--text-muted)">$${fmt(d.proyAnual)}</td>
+        <td style="padding:0.6rem 0.9rem;text-align:center">
+          <span style="background:rgba(90,143,201,0.18);color:var(--blue);border-radius:5px;padding:0.15rem 0.55rem;font-weight:700;font-size:0.82rem">${d.ocupados}</span>
+        </td>
+        <td style="padding:0.6rem 0.9rem;text-align:center">
+          <span style="background:rgba(90,158,122,0.22);color:var(--green);border-radius:5px;padding:0.15rem 0.55rem;font-weight:700;font-size:0.82rem">${d.libres}</span>
+        </td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+
+    tfoot.innerHTML = `<tr style="background:var(--surface2);border-top:2px solid var(--border)">
+      <td style="padding:0.7rem 0.9rem;font-weight:700">Total</td>
+      <td style="padding:0.7rem 0.9rem;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--gold)">$${fmt(totalIngreso)}</td>
+      <td style="padding:0.7rem 0.9rem;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--gold)">$${fmt(totalProyAnual)}</td>
+      <td style="padding:0.7rem 0.9rem;text-align:center;font-weight:700;color:var(--blue)">${totalOcupados}</td>
+      <td style="padding:0.7rem 0.9rem;text-align:center;font-weight:700;color:var(--green)">${totalLibres}</td>
+    </tr>`;
+
+    const proy = document.getElementById('stats-proyeccion');
+    if (proy) proy.textContent = '$' + fmt(totalProyAnual);
+
+    // ── Gráfico módulos ──
+    const chartM = document.getElementById('stats-chart-modulos');
+    if (chartM) {
+      chartM.innerHTML = datos.map(d => {
+        const pctOcup  = Math.round((d.ocupados / TOTAL_MODULOS) * 100);
+        const pctLibre = 100 - pctOcup;
+        return `<div class="stats-bar-row">
+          <div class="stats-bar-label">${d.nombre}</div>
+          <div class="stats-bar-track" style="display:flex">
+            <div class="stats-bar-fill" style="width:${pctOcup}%;background:var(--blue);border-radius:${pctOcup===100?'6px':'6px 0 0 6px'}"></div>
+            <div class="stats-bar-fill" style="width:${pctLibre}%;background:rgba(90,158,122,0.4);border-radius:${pctLibre===100?'6px':'0 6px 6px 0'}"></div>
+          </div>
+          <div class="stats-bar-value" style="font-size:0.68rem">${d.ocupados} / ${TOTAL_MODULOS}</div>
+        </div>`;
+      }).join('');
+      // leyenda (solo insertar una vez)
+      const next = chartM.nextElementSibling;
+      if (!next || !next.dataset.leyenda) {
+        const div = document.createElement('div');
+        div.dataset.leyenda = '1';
+        div.style.cssText = 'display:flex;gap:1rem;font-size:0.7rem;color:var(--text-dim);margin-top:0.5rem;padding-left:76px';
+        div.innerHTML = `<span><span style="display:inline-block;width:10px;height:10px;background:var(--blue);border-radius:2px;margin-right:4px"></span>Ocupado</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(90,158,122,0.4);border-radius:2px;margin-right:4px"></span>Libre</span>`;
+        chartM.after(div);
+      }
+    }
+
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:1rem;text-align:center;color:var(--red)">Error: ${e.message}</td></tr>`;
+    console.error('[LUMA] estadísticas:', e);
+  }
+}
+
+// ── IMPRIMIR VISTA ──
+function imprimirVista(nombre) {
+  // Quitar print-target previo
+  document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
+  const target = document.getElementById('view-' + nombre);
+  if (target) target.classList.add('print-target');
+  window.print();
+  setTimeout(() => {
+    document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
+  }, 1000);
 }
 
 // ── UI HELPERS ──

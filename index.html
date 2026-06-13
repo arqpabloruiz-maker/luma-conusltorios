@@ -1187,7 +1187,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Hora fin</label>
-              <input class="form-input" id="hor-fin" type="time" value="13:00">
+              <input class="form-input" id="hor-fin" type="time" value="14:00">
             </div>
           </div>
           <div class="form-group">
@@ -2460,6 +2460,10 @@ async function cargarPagos() {
       order: 'fecha.desc', limit: 1000
     });
   } catch(e) { todosLosPagos = []; }
+
+  // Disparar carga del primer profesional automáticamente
+  const sel = document.getElementById('pag-prof');
+  if (sel && sel.value) onProfPagoChange();
 }
 
 // Normalizar mes: "mayo 2026" → "mayo" | "mayo" → "mayo"
@@ -2826,7 +2830,7 @@ const BLOQUES = [
   { key:'T1', label:'Tarde 1ª',  hi:'14:00', hf:'16:00', turno:'Tarde'  },
   { key:'T2', label:'Tarde 2ª',  hi:'16:00', hf:'18:00', turno:'Tarde'  },
 ];
-// Turno completo: M = M1+M2 (08-12), T = T1+T2 (13-17)
+// Turno completo: M = M1+M2 (08-12), T = T1+T2 (14-18)
 const CONSULTORIOS = ['consul 1','consul 2','consul 3','consul 4','consul 5','consul 6'];
 
 // grillaDatos[dia][bloque_key][consul] = { id_horario, nombre_medico, id_profesional } | null
@@ -2848,7 +2852,8 @@ function _bloqueDeHora(hi, hf) {
   const horaNum = parseInt(h.split(':')[0]);
   if (horaNum >= 6 && horaNum < 10) return ['M1','M2'];
   if (horaNum >= 10 && horaNum < 13) return ['M2'];
-  if (horaNum >= 13 && horaNum < 16) return ['T1','T2'];
+  if (horaNum >= 13 && horaNum < 14) return ['T1']; // hora 13 queda en T1
+  if (horaNum >= 14 && horaNum < 16) return ['T1','T2'];
   if (horaNum >= 16) return ['T2'];
   return ['T1','T2'];
 }

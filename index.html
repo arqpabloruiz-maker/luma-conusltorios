@@ -1587,8 +1587,8 @@
       <div class="modal-handle"></div>
       <div id="recibo-contenido"></div>
       <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button onclick="copiarRecibo()" class="btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:0.4rem">
-          📋 Copiar texto
+        <button onclick="guardarReciboPDF()" class="btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:0.4rem">
+          💾 Guardar PDF
         </button>
         <div id="wa-link-wrap" style="flex:2"></div>
       </div>
@@ -2709,6 +2709,17 @@ function onMesPagoChange() {
       conceptoWrap.textContent = `No hay liquidación para ${mesSeleccionado}`;
     }
   }
+
+  // Concepto por defecto = mes seleccionado (no pisa texto libre del usuario)
+  const conceptoInput = document.getElementById('pag-concepto');
+  if (conceptoInput) {
+    const _meses = ['enero','febrero','marzo','abril','mayo','junio',
+                    'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const valActual = conceptoInput.value.trim().toLowerCase();
+    if (!valActual || _meses.includes(valActual)) {
+      conceptoInput.value = _capitalize(mesSeleccionado);
+    }
+  }
 }
 
 async function guardarPago() {
@@ -2796,6 +2807,7 @@ async function guardarPago() {
       const profNombre = profSel.options[profSel.selectedIndex]?.text || '';
       const profObj = profesionales.find(p => p.ID_Profesional === parseInt(idProf));
       mostrarRecibo({
+        idProf: parseInt(idProf),
         nombre: profNombre,
         telefono: profObj?.telefono || '',
         monto, mes, concepto,
@@ -2820,6 +2832,288 @@ async function guardarPago() {
       cargarDashboard()
     ]);
   } catch(e2) { console.warn('Error actualizando vistas:', e2); }
+}
+
+// ── RECIBO DE PAGO ──
+let _reciboTexto = '';
+let _reciboData = null;
+
+function _cargarJsPDF() {
+  if (window.jspdf) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('No se pudo cargar jsPDF'));
+    document.head.appendChild(s);
+  });
+}
+
+function _fmtFechaRecibo(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('T')[0].split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function _capitalize(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+async function mostrarRecibo({ idProf, nombre, telefono, monto, mes, concepto, fecha }) {
+  // Calcular saldo restante del profesional después de este pago, desglosado por mes
+  let saldoRestante = null;
+  let mesesPendientes = [];
+  try {
+    const [liquidaciones, pagos] = await Promise.all([
+      sbFetch('t_liquidacion_mensual', {
+        select: 'mes_liquidado,monto_total',
+        filters: [`id_profesional=eq.${idProf}`], limit: 200
+      }),
+      sbFetch('pagos', {
+        select: 'mes_abonado,monto',
+        filters: [`id_profesional=eq.${idProf}`], limit: 500
+      })
+    ]);
+    const pagosPorMes = {};
+    pagos.forEach(p => {
+      const k = (p.mes_abonado || '').toLowerCase();
+      pagosPorMes[k] = (pagosPorMes[k] || 0) + (parseFloat(p.monto) || 0);
+    });
+    liquidaciones.forEach(l => {
+      const k = normMes(l.mes_liquidado);
+      const debe = parseFloat(l.monto_total) || 0;
+      const pago = pagosPorMes[k] || 0;
+      const saldoMes = debe - pago;
+      if (saldoMes > 0.5) {
+        mesesPendientes.push({ mes: l.mes_liquidado || _capitalize(k), saldo: saldoMes });
+      }
+    });
+    saldoRestante = mesesPendientes.reduce((s, m) => s + m.saldo, 0);
+  } catch(e) {
+    console.warn('No se pudo calcular saldo restante:', e);
+  }
+
+  const fechaFmt = _fmtFechaRecibo(fecha);
+  const mesFmt = _capitalize(mes);
+  const montoFmt = fmt(monto);
+
+  let saldoLinea = '';
+  if (saldoRestante !== null) {
+    if (saldoRestante > 0.5) {
+      const detalle = mesesPendientes
+        .map(m => `  · ${m.mes}: $${fmt(m.saldo)}`)
+        .join('\n');
+      saldoLinea = `\nSaldo pendiente: $${fmt(saldoRestante)}${detalle ? '\n' + detalle : ''}`;
+    } else {
+      saldoLinea = `\nSaldo: ✓ Al día`;
+    }
+  }
+
+  // Texto plano para WhatsApp / copiar
+  _reciboTexto =
+`🏥 *LUMA Consultorios*
+_Recibo de pago_
+
+Profesional: ${nombre}
+Fecha: ${fechaFmt}
+Mes abonado: ${mesFmt}${concepto ? `\nConcepto: ${concepto}` : ''}
+Monto: $${montoFmt}${saldoLinea}
+
+¡Gracias!`;
+
+  // Datos estructurados para PDF
+  _reciboData = {
+    nombre, telefono, monto, montoFmt, mes: mesFmt, concepto,
+    fecha, fechaFmt, saldoRestante, mesesPendientes
+  };
+
+  // HTML para el modal
+  let saldoHtml = '';
+  if (saldoRestante !== null) {
+    if (saldoRestante > 0.5) {
+      const detalleHtml = mesesPendientes.map(m =>
+        `<div style="display:flex;justify-content:space-between;font-size:0.82rem;color:var(--text-muted);padding:0.15rem 0"><span>· ${m.mes}</span><span style="font-family:'DM Mono',monospace">$${fmt(m.saldo)}</span></div>`
+      ).join('');
+      saldoHtml = `<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.9rem">
+        <div style="display:flex;justify-content:space-between"><strong>Saldo pendiente:</strong> <span style="color:var(--red);font-family:'DM Mono',monospace">$${fmt(saldoRestante)}</span></div>
+        ${detalleHtml ? `<div style="margin-top:0.4rem;padding-left:0.4rem;border-left:2px solid var(--border)">${detalleHtml}</div>` : ''}
+      </div>`;
+    } else {
+      saldoHtml = `<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.9rem"><strong>Saldo:</strong> <span style="color:var(--green)">✓ Al día</span></div>`;
+    }
+  }
+
+  document.getElementById('recibo-contenido').innerHTML = `
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="font-size:1.05rem;font-weight:700;letter-spacing:0.02em">🏥 LUMA Consultorios</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:0.15rem">Recibo de pago</div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1rem;font-size:0.9rem;line-height:1.6">
+      <div><strong>Profesional:</strong> ${nombre}</div>
+      <div><strong>Fecha:</strong> ${fechaFmt}</div>
+      <div><strong>Mes abonado:</strong> ${mesFmt}</div>
+      ${concepto ? `<div><strong>Concepto:</strong> ${concepto}</div>` : ''}
+      <div style="margin-top:0.4rem;font-size:1.05rem"><strong>Monto:</strong> <span style="font-family:'DM Mono',monospace;color:var(--green)">$${montoFmt}</span></div>
+      ${saldoHtml}
+    </div>
+  `;
+
+  // Botón WhatsApp
+  const waWrap = document.getElementById('wa-link-wrap');
+  const telNorm = (telefono || '').replace(/[^0-9]/g, '');
+  if (telNorm) {
+    const numero = telNorm.startsWith('54') ? telNorm : '54' + telNorm;
+    const url = `https://wa.me/${numero}?text=${encodeURIComponent(_reciboTexto)}`;
+    waWrap.innerHTML = `<a href="${url}" target="_blank" rel="noopener"
+        style="display:flex;align-items:center;justify-content:center;gap:0.4rem;background:#25D366;color:white;border:none;border-radius:8px;padding:0.65rem 0.75rem;font-size:0.9rem;font-weight:600;text-decoration:none;width:100%;box-sizing:border-box">
+        📱 Enviar por WhatsApp
+      </a>`;
+  } else {
+    waWrap.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px dashed var(--border);border-radius:8px;padding:0.65rem 0.75rem;font-size:0.8rem;color:var(--text-muted);width:100%;box-sizing:border-box">Sin teléfono cargado</div>`;
+  }
+
+  document.getElementById('recibo-overlay').classList.remove('hidden');
+}
+
+async function guardarReciboPDF() {
+  if (!_reciboData) { showToast('No hay recibo para guardar', 'error'); return; }
+  try {
+    await _cargarJsPDF();
+  } catch(e) {
+    showToast('No se pudo cargar el generador de PDF', 'error');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const d = _reciboData;
+  const W = 210;
+  let y = 22;
+
+  // Encabezado
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text('LUMA Consultorios', W/2, y, { align: 'center' });
+  y += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(120);
+  doc.text('RECIBO DE PAGO', W/2, y, { align: 'center' });
+  doc.setTextColor(0);
+  y += 8;
+  doc.setDrawColor(200);
+  doc.line(20, y, W-20, y);
+  y += 10;
+
+  // Cuerpo
+  doc.setFontSize(11);
+  const filas = [
+    ['Profesional:', d.nombre],
+    ['Fecha:', d.fechaFmt],
+    ['Mes abonado:', d.mes],
+  ];
+  if (d.concepto) filas.push(['Concepto:', d.concepto]);
+
+  filas.forEach(([k, v]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(k, 25, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(v || ''), 65, y);
+    y += 7;
+  });
+
+  y += 3;
+  doc.setDrawColor(230);
+  doc.line(25, y, W-25, y);
+  y += 8;
+
+  // Monto
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('Monto:', 25, y);
+  doc.text('$' + d.montoFmt, W-25, y, { align: 'right' });
+  y += 10;
+
+  // Saldo
+  if (d.saldoRestante !== null && d.saldoRestante !== undefined) {
+    doc.setDrawColor(200);
+    doc.line(25, y, W-25, y);
+    y += 8;
+    doc.setFontSize(11);
+    if (d.saldoRestante > 0.5) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Saldo pendiente:', 25, y);
+      doc.setTextColor(200, 60, 60);
+      doc.text('$' + fmt(d.saldoRestante), W-25, y, { align: 'right' });
+      doc.setTextColor(0);
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(90);
+      (d.mesesPendientes || []).forEach(m => {
+        doc.text('· ' + m.mes, 30, y);
+        doc.text('$' + fmt(m.saldo), W-25, y, { align: 'right' });
+        y += 6;
+      });
+      doc.setTextColor(0);
+    } else {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Saldo:', 25, y);
+      doc.setTextColor(40, 150, 60);
+      doc.text('Al día', W-25, y, { align: 'right' });
+      doc.setTextColor(0);
+      y += 7;
+    }
+  }
+
+  // Footer
+  y = 280;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(9);
+  doc.setTextColor(140);
+  doc.text('Generado el ' + new Date().toLocaleString('es-AR'), W/2, y, { align: 'center' });
+
+  // Nombre sugerido
+  const slug = (s) => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  const nombreArchivo = `recibo_${slug(d.nombre)}_${slug(d.mes)}_${(d.fecha||'').split('T')[0]}.pdf`;
+
+  // Guardar: si el navegador soporta showSaveFilePicker, dejar elegir carpeta; sino, descarga normal
+  const blob = doc.output('blob');
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: nombreArchivo,
+        types: [{ description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      showToast('Recibo guardado ✓', 'success');
+      return;
+    } catch(e) {
+      if (e && e.name === 'AbortError') return; // usuario canceló
+      console.warn('showSaveFilePicker falló, fallback a descarga:', e);
+    }
+  }
+  // Fallback: descarga estándar
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('Recibo descargado ✓', 'success');
+}
+
+function cerrarRecibo(event) {
+  // Si viene de click en overlay, solo cerrar si el target es el overlay mismo
+  if (event && event.target && event.target.id !== 'recibo-overlay' && event.type === 'click') {
+    return;
+  }
+  document.getElementById('recibo-overlay').classList.add('hidden');
 }
 
 // ── GRILLA SEMANAL ──
